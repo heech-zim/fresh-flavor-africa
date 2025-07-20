@@ -6,6 +6,7 @@ import HowItWorks from '@/components/HowItWorks';
 import ForRetailers from '@/components/ForRetailers';
 import ForFarmers from '@/components/ForFarmers';
 import Logistics from '@/components/Logistics';
+import About from '@/components/About';
 
 const Index = () => {
   return (
@@ -18,6 +19,7 @@ const Index = () => {
       <ForRetailers />
       <ForFarmers />
       <Logistics />
+      <About />
     </div>
   );
 };
