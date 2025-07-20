@@ -23,10 +23,11 @@ const Navigation = () => {
           {/* Logo */}
           <div className="flex-shrink-0">
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-gradient-fresh rounded-lg flex items-center justify-center mr-3">
-                <span className="text-primary-foreground font-bold text-lg">A</span>
-              </div>
-              <span className="text-xl font-bold text-foreground">Afreshia</span>
+              <img 
+                src="/lovable-uploads/05277373-e08d-4cce-9a63-038eab5f3237.png" 
+                alt="Afreshia Logo" 
+                className="h-8 w-auto"
+              />
             </div>
           </div>
 
