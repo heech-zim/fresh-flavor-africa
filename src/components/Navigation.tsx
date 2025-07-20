@@ -49,7 +49,7 @@ const Navigation = () => {
           <div className="hidden md:flex items-center space-x-4">
             <Button variant="outline" size="sm">
               <Phone className="w-4 h-4 mr-2" />
-              +263 123 456
+              +263 771 414 102
             </Button>
             <Button className="bg-gradient-fresh hover:bg-primary-hover">
               Request Quote
@@ -91,7 +91,7 @@ const Navigation = () => {
             <div className="flex flex-col space-y-2 px-3">
               <Button variant="outline" size="sm" className="justify-start">
                 <Phone className="w-4 h-4 mr-2" />
-                +263 123 456
+                +263 771 414 102
               </Button>
               <Button className="bg-gradient-fresh hover:bg-primary-hover justify-start">
                 Request Quote
