@@ -5,6 +5,7 @@ import ProductShowcase from '@/components/ProductShowcase';
 import HowItWorks from '@/components/HowItWorks';
 import ForRetailers from '@/components/ForRetailers';
 import ForFarmers from '@/components/ForFarmers';
+import Logistics from '@/components/Logistics';
 
 const Index = () => {
   return (
@@ -16,6 +17,7 @@ const Index = () => {
       <HowItWorks />
       <ForRetailers />
       <ForFarmers />
+      <Logistics />
     </div>
   );
 };
