@@ -9,7 +9,7 @@ const Navigation = () => {
   const navigate = useNavigate();
 
   const handleRequestQuote = () => {
-    navigate('/contact');
+    navigate('/request-quote');
   };
 
   const navItems = [
