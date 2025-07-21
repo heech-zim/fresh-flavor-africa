@@ -4,6 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, Package, ArrowRight } from 'lucide-react';
 
+// Product images
+import okraImage from '@/assets/okra.jpg';
+import sweetPotatoesImage from '@/assets/sweet-potatoes.jpg';
+import collardGreensImage from '@/assets/collard-greens.jpg';
+import babyCornImage from '@/assets/baby-corn.jpg';
+import butternutSquashImage from '@/assets/butternut-squash.jpg';
+import passionFruitImage from '@/assets/passion-fruit.jpg';
+
 const ProductShowcase = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
 
@@ -18,7 +26,7 @@ const ProductShowcase = () => {
       moq: '500kg',
       status: 'ACIR Certified',
       description: 'Fresh tender okra pods, perfect for international markets.',
-      image: '/placeholder.svg'
+      image: okraImage
     },
     {
       name: 'Sweet Potatoes',
@@ -28,7 +36,7 @@ const ProductShowcase = () => {
       moq: '1000kg',
       status: 'FDA Approved',
       description: 'Orange-fleshed sweet potatoes rich in beta-carotene.',
-      image: '/placeholder.svg'
+      image: sweetPotatoesImage
     },
     {
       name: 'Collard Greens',
@@ -38,7 +46,7 @@ const ProductShowcase = () => {
       moq: '250kg',
       status: 'ACIR Certified',
       description: 'Nutrient-dense leafy greens, pesticide-free cultivation.',
-      image: '/placeholder.svg'
+      image: collardGreensImage
     },
     {
       name: 'Baby Corn',
@@ -48,7 +56,7 @@ const ProductShowcase = () => {
       moq: '300kg',
       status: 'FDA Approved',
       description: 'Tender baby corn, hand-picked at optimal maturity.',
-      image: '/placeholder.svg'
+      image: babyCornImage
     },
     {
       name: 'Butternut Squash',
@@ -58,7 +66,7 @@ const ProductShowcase = () => {
       moq: '800kg',
       status: 'ACIR Certified',
       description: 'Premium butternut squash with extended shelf life.',
-      image: '/placeholder.svg'
+      image: butternutSquashImage
     },
     {
       name: 'Passion Fruit',
@@ -68,7 +76,7 @@ const ProductShowcase = () => {
       moq: '200kg',
       status: 'FDA Approved',
       description: 'Aromatic passion fruit with high pulp content.',
-      image: '/placeholder.svg'
+      image: passionFruitImage
     }
   ];
 
@@ -111,10 +119,12 @@ const ProductShowcase = () => {
               key={index} 
               className="group hover:shadow-card transition-all duration-300 overflow-hidden border-0 bg-background"
             >
-              <div className="aspect-square bg-fresh-accent p-8 flex items-center justify-center">
-                <div className="w-full h-full bg-muted rounded-lg flex items-center justify-center">
-                  <Package className="w-16 h-16 text-muted-foreground" />
-                </div>
+              <div className="aspect-square bg-fresh-accent overflow-hidden">
+                <img 
+                  src={product.image} 
+                  alt={product.name}
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                />
               </div>
               
               <CardContent className="p-6">

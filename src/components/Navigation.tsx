@@ -13,7 +13,7 @@ const Navigation = () => {
     { name: 'For Farmers', href: '#farmers' },
     { name: 'Logistics', href: '#logistics' },
     { name: 'About', href: '#about' },
-    { name: 'Contact', href: '#contact' },
+    { name: 'Contact', href: '/contact' },
   ];
 
   return (
