@@ -2,9 +2,15 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Menu, X, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleRequestQuote = () => {
+    navigate('/contact');
+  };
 
   const navItems = [
     { name: 'Home', href: '#home' },
@@ -52,7 +58,10 @@ const Navigation = () => {
               <Phone className="w-4 h-4 mr-2" />
               +263 771 414 102
             </Button>
-            <Button className="bg-gradient-fresh hover:bg-primary-hover">
+            <Button 
+              className="bg-gradient-fresh hover:bg-primary-hover"
+              onClick={handleRequestQuote}
+            >
               Request Quote
             </Button>
           </div>
@@ -94,7 +103,10 @@ const Navigation = () => {
                 <Phone className="w-4 h-4 mr-2" />
                 +263 771 414 102
               </Button>
-              <Button className="bg-gradient-fresh hover:bg-primary-hover justify-start">
+              <Button 
+                className="bg-gradient-fresh hover:bg-primary-hover justify-start"
+                onClick={handleRequestQuote}
+              >
                 Request Quote
               </Button>
             </div>
