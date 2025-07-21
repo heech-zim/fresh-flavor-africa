@@ -1,17 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Shield, Truck, CheckCircle } from 'lucide-react';
 import heroImage from '@/assets/hero-farm-landscape.jpg';
-
 const Hero = () => {
-  return (
-    <section id="home" className="relative min-h-screen flex items-center">
+  return <section id="home" className="relative min-h-screen flex items-center">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
-        <img
-          src={heroImage}
-          alt="African farm landscape with fresh produce"
-          className="w-full h-full object-cover"
-        />
+        <img src={heroImage} alt="African farm landscape with fresh produce" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30"></div>
       </div>
 
@@ -47,11 +41,7 @@ const Hero = () => {
               Request a Quote
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm text-lg px-8 py-6"
-            >
+            <Button variant="outline" size="lg" className="border-white/30 hover:bg-white/10 backdrop-blur-sm text-lg px-8 py-6 text-green-600">
               Download Spec Sheet
             </Button>
           </div>
@@ -82,8 +72,6 @@ const Hero = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default Hero;
