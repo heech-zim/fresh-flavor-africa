@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -6,11 +6,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useLocation } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import { Truck, Package, MapPin, Calculator } from 'lucide-react';
 
 const RequestQuote = () => {
   const { toast } = useToast();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -23,6 +25,18 @@ const RequestQuote = () => {
     deliveryDate: '',
     additionalInfo: ''
   });
+
+  // Pre-fill product if coming from product page
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const productParam = searchParams.get('product');
+    if (productParam) {
+      setFormData(prev => ({
+        ...prev,
+        product: productParam
+      }));
+    }
+  }, [location]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

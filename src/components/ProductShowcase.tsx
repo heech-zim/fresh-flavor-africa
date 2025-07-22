@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, Package, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // Product images
 import okraImage from '@/assets/okra.jpg';
@@ -14,6 +15,7 @@ import passionFruitImage from '@/assets/passion-fruit.jpg';
 
 const ProductShowcase = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const navigate = useNavigate();
 
   const categories = ['All', 'Vegetables', 'Roots & Tubers', 'Leafy Greens', 'Fruits'];
 
@@ -167,6 +169,7 @@ const ProductShowcase = () => {
                 <Button 
                   className="w-full bg-gradient-fresh hover:bg-primary-hover group"
                   size="sm"
+                  onClick={() => navigate(`/request-quote?product=${encodeURIComponent(product.name)}`)}
                 >
                   Request Quote
                   <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -181,7 +184,12 @@ const ProductShowcase = () => {
           <p className="text-muted-foreground mb-6">
             Looking for specific products or custom requirements?
           </p>
-          <Button size="lg" variant="outline" className="hover:bg-primary hover:text-primary-foreground">
+          <Button 
+            size="lg" 
+            variant="outline" 
+            className="hover:bg-primary hover:text-primary-foreground"
+            onClick={() => navigate('/catalogue')}
+          >
             View Full Catalogue
             <ArrowRight className="ml-2 w-5 h-5" />
           </Button>
