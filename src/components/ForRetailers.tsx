@@ -3,9 +3,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { DollarSign, FileText, Scale, TrendingUp, Download, ArrowRight, Building2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { DollarSign, FileText, Scale, TrendingUp, Download, ArrowRight, Building2, Upload } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from 'react';
 
 const ForRetailers = () => {
+  const { toast } = useToast();
+  const [complianceFiles, setComplianceFiles] = useState<Record<string, string>>({});
+  const [uploading, setUploading] = useState<string | null>(null);
   const benefits = [
     {
       icon: DollarSign,
@@ -34,12 +41,115 @@ const ForRetailers = () => {
   ];
 
   const complianceDocs = [
-    'ACIR Certificate 2024',
-    'FDA Registration Proof',
-    'PACA License Documentation',
-    'GlobalG.A.P. Farm Certificates',
-    'Cold Chain Validation Report'
+    { id: 'acir-certificate', name: 'ACIR Certificate 2024' },
+    { id: 'fda-registration', name: 'FDA Registration Proof' },
+    { id: 'paca-license', name: 'PACA License Documentation' },
+    { id: 'globalgap-certificates', name: 'GlobalG.A.P. Farm Certificates' },
+    { id: 'cold-chain-validation', name: 'Cold Chain Validation Report' }
   ];
+
+  // Load existing compliance files
+  const loadComplianceFiles = async () => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('compliance-docs')
+        .list('', { limit: 100 });
+
+      if (error) throw error;
+
+      const fileMap: Record<string, string> = {};
+      data?.forEach(file => {
+        const docId = file.name.split('-')[0];
+        fileMap[docId] = file.name;
+      });
+      setComplianceFiles(fileMap);
+    } catch (error) {
+      console.error('Error loading compliance files:', error);
+    }
+  };
+
+  // Upload compliance document
+  const handleFileUpload = async (docId: string, file: File) => {
+    if (!file.type.includes('pdf')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a PDF file.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(docId);
+    try {
+      const fileName = `${docId}-${Date.now()}.pdf`;
+      const { error } = await supabase.storage
+        .from('compliance-docs')
+        .upload(fileName, file);
+
+      if (error) throw error;
+
+      setComplianceFiles(prev => ({ ...prev, [docId]: fileName }));
+      toast({
+        title: "Upload successful",
+        description: "Compliance document uploaded successfully.",
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload document. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  // Download compliance document
+  const handleDownload = async (docId: string, docName: string) => {
+    const fileName = complianceFiles[docId];
+    if (!fileName) {
+      toast({
+        title: "Document not available",
+        description: "This compliance document has not been uploaded yet.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.storage
+        .from('compliance-docs')
+        .download(fileName);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${docName}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Download started",
+        description: "Your compliance document is downloading.",
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Download failed",
+        description: "Failed to download document. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    loadComplianceFiles();
+  }, []);
 
   return (
     <section id="retailers" className="py-24 bg-gradient-fresh-subtle">
@@ -94,17 +204,69 @@ const ForRetailers = () => {
             {/* Compliance Downloads */}
             <Card className="mt-8 border-0 bg-background/80 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <FileText className="w-5 h-5 mr-2 text-afresh-green" />
-                  Compliance Downloads
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <FileText className="w-5 h-5 mr-2 text-afresh-green" />
+                    Compliance Downloads
+                  </div>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Upload Compliance Documents</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        {complianceDocs.map((doc) => (
+                          <div key={doc.id} className="flex items-center justify-between p-3 border rounded-md">
+                            <span className="text-sm font-medium">{doc.name}</span>
+                            <div className="flex items-center space-x-2">
+                              {complianceFiles[doc.id] && (
+                                <Badge variant="outline" className="text-xs text-green-600">
+                                  Uploaded
+                                </Badge>
+                              )}
+                              <input
+                                type="file"
+                                accept=".pdf"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleFileUpload(doc.id, file);
+                                }}
+                                className="hidden"
+                                id={`upload-${doc.id}`}
+                              />
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={uploading === doc.id}
+                                onClick={() => document.getElementById(`upload-${doc.id}`)?.click()}
+                              >
+                                {uploading === doc.id ? 'Uploading...' : 'Choose File'}
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {complianceDocs.map((doc, index) => (
-                    <div key={index} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
-                      <span className="text-sm text-foreground">{doc}</span>
-                      <Button variant="ghost" size="sm">
+                  {complianceDocs.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                      <span className="text-sm text-foreground">{doc.name}</span>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        disabled={!complianceFiles[doc.id]}
+                        onClick={() => handleDownload(doc.id, doc.name)}
+                      >
                         <Download className="w-4 h-4" />
                       </Button>
                     </div>
