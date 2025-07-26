@@ -1,11 +1,22 @@
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Download, FileText, Thermometer, Scale, Calendar, MapPin } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Download, FileText, Thermometer, Scale, Upload, X } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const ProductSpecs = () => {
+  const [uploadingFile, setUploadingFile] = useState<string | null>(null);
+  const [specFiles, setSpecFiles] = useState<Record<string, string>>({});
+  const { toast } = useToast();
+
   const productSpecs = [
     {
+      id: 'okra',
       name: 'Okra',
       category: 'Vegetables',
       specifications: {
@@ -21,10 +32,10 @@ const ProductSpecs = () => {
         fiber: '3.2g/100g',
         folate: '60mcg/100g',
         potassium: '299mg/100g'
-      },
-      downloadUrl: '#'
+      }
     },
     {
+      id: 'sweet-potatoes',
       name: 'Sweet Potatoes',
       category: 'Roots & Tubers',
       specifications: {
@@ -40,10 +51,10 @@ const ProductSpecs = () => {
         vitamin_a: '709mcg/100g',
         fiber: '3g/100g',
         potassium: '337mg/100g'
-      },
-      downloadUrl: '#'
+      }
     },
     {
+      id: 'collard-greens',
       name: 'Collard Greens',
       category: 'Leafy Greens',
       specifications: {
@@ -59,10 +70,10 @@ const ProductSpecs = () => {
         vitamin_c: '35mg/100g',
         calcium: '232mg/100g',
         iron: '0.47mg/100g'
-      },
-      downloadUrl: '#'
+      }
     },
     {
+      id: 'baby-corn',
       name: 'Baby Corn',
       category: 'Vegetables',
       specifications: {
@@ -78,10 +89,10 @@ const ProductSpecs = () => {
         vitamin_c: '7mg/100g',
         folate: '46mcg/100g',
         potassium: '270mg/100g'
-      },
-      downloadUrl: '#'
+      }
     },
     {
+      id: 'butternut-squash',
       name: 'Butternut Squash',
       category: 'Vegetables',
       specifications: {
@@ -97,10 +108,10 @@ const ProductSpecs = () => {
         vitamin_c: '21mg/100g',
         fiber: '2g/100g',
         potassium: '352mg/100g'
-      },
-      downloadUrl: '#'
+      }
     },
     {
+      id: 'passion-fruit',
       name: 'Passion Fruit',
       category: 'Fruits',
       specifications: {
@@ -116,10 +127,111 @@ const ProductSpecs = () => {
         vitamin_a: '64mcg/100g',
         fiber: '10.4g/100g',
         iron: '1.6mg/100g'
-      },
-      downloadUrl: '#'
+      }
     }
   ];
+
+  // Load existing spec files on component mount
+  useEffect(() => {
+    loadSpecFiles();
+  }, []);
+
+  const loadSpecFiles = async () => {
+    try {
+      const { data: files, error } = await supabase.storage
+        .from('product-specs')
+        .list('', { limit: 100 });
+
+      if (error) throw error;
+
+      const fileMap: Record<string, string> = {};
+      files?.forEach(file => {
+        const productId = file.name.replace('.pdf', '');
+        fileMap[productId] = file.name;
+      });
+      setSpecFiles(fileMap);
+    } catch (error) {
+      console.error('Error loading spec files:', error);
+    }
+  };
+
+  const handleFileUpload = async (productId: string, file: File) => {
+    if (!file.type.includes('pdf')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a PDF file only.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingFile(productId);
+    try {
+      const fileName = `${productId}.pdf`;
+      const { error } = await supabase.storage
+        .from('product-specs')
+        .upload(fileName, file, { upsert: true });
+
+      if (error) throw error;
+
+      setSpecFiles(prev => ({ ...prev, [productId]: fileName }));
+      toast({
+        title: "Upload successful",
+        description: "Spec sheet uploaded successfully.",
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload spec sheet. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingFile(null);
+    }
+  };
+
+  const handleDownload = async (productId: string, productName: string) => {
+    const fileName = specFiles[productId];
+    if (!fileName) {
+      toast({
+        title: "No spec sheet available",
+        description: "Spec sheet for this product is not yet available.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.storage
+        .from('product-specs')
+        .download(fileName);
+
+      if (error) throw error;
+
+      // Create download link
+      const url = window.URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${productName}-spec-sheet.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Download started",
+        description: `Downloading ${productName} spec sheet.`,
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Download failed",
+        description: "Failed to download spec sheet. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <section className="py-24 bg-fresh-accent/10">
@@ -214,20 +326,53 @@ const ProductSpecs = () => {
                   </div>
                 </div>
 
-                {/* Download Button */}
-                <div className="pt-4 border-t border-border">
+                {/* Download and Upload Buttons */}
+                <div className="pt-4 border-t border-border space-y-3">
                   <Button 
                     variant="outline" 
                     className="w-full hover:bg-primary hover:text-primary-foreground group"
-                    onClick={() => {
-                      // In a real app, this would trigger a download
-                      alert(`Downloading ${product.name} specification sheet...`);
-                    }}
+                    onClick={() => handleDownload(product.id, product.name)}
+                    disabled={!specFiles[product.id]}
                   >
                     <FileText className="w-4 h-4 mr-2" />
-                    Download Spec Sheet
+                    {specFiles[product.id] ? 'Download Spec Sheet' : 'No Spec Sheet Available'}
                     <Download className="w-4 h-4 ml-2 group-hover:translate-y-0.5 transition-transform" />
                   </Button>
+
+                  {/* Upload Dialog for Admin */}
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="w-full">
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload Spec Sheet
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Upload Spec Sheet - {product.name}</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor={`spec-file-${product.id}`}>PDF File</Label>
+                          <Input
+                            id={`spec-file-${product.id}`}
+                            type="file"
+                            accept=".pdf"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleFileUpload(product.id, file);
+                              }
+                            }}
+                            disabled={uploadingFile === product.id}
+                          />
+                        </div>
+                        {uploadingFile === product.id && (
+                          <p className="text-sm text-muted-foreground">Uploading...</p>
+                        )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </CardContent>
             </Card>
