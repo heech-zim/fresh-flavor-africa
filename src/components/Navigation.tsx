@@ -2,24 +2,48 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Menu, X, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleRequestQuote = () => {
     navigate('/request-quote');
   };
 
+  const handleNavigation = (href: string) => {
+    if (href.startsWith('#')) {
+      // Section navigation
+      if (location.pathname !== '/') {
+        // Navigate to home page first, then scroll to section
+        navigate('/');
+        setTimeout(() => {
+          const element = document.querySelector(href);
+          element?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      } else {
+        // Already on home page, just scroll to section
+        const element = document.querySelector(href);
+        element?.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      // Page navigation
+      navigate(href);
+    }
+    setIsOpen(false);
+  };
+
   const navItems = [
-    { name: 'Home', href: '#home' },
+    { name: 'Home', href: '/' },
     { name: 'Products', href: '#products' },
     { name: 'For Retailers', href: '#retailers' },
     { name: 'For Farmers', href: '#farmers' },
     { name: 'Logistics', href: '#logistics' },
     { name: 'About', href: '#about' },
     { name: 'Contact', href: '/contact' },
+    { name: 'Catalogue', href: '/catalogue' },
   ];
 
   return (
@@ -41,13 +65,13 @@ const Navigation = () => {
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
               {navItems.map((item) => (
-                <a
+                <button
                   key={item.name}
-                  href={item.href}
+                  onClick={() => handleNavigation(item.href)}
                   className="text-foreground hover:text-primary px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
                 >
                   {item.name}
-                </a>
+                </button>
               ))}
             </div>
           </div>
@@ -88,14 +112,13 @@ const Navigation = () => {
       <div className={cn("md:hidden", isOpen ? "block" : "hidden")}>
         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-background border-t border-border">
           {navItems.map((item) => (
-            <a
+            <button
               key={item.name}
-              href={item.href}
-              className="text-foreground hover:text-primary block px-3 py-2 rounded-md text-base font-medium"
-              onClick={() => setIsOpen(false)}
+              onClick={() => handleNavigation(item.href)}
+              className="text-foreground hover:text-primary block px-3 py-2 rounded-md text-base font-medium w-full text-left"
             >
               {item.name}
-            </a>
+            </button>
           ))}
           <div className="pt-4 pb-3 border-t border-border">
             <div className="flex flex-col space-y-2 px-3">

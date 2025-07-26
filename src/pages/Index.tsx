@@ -15,13 +15,23 @@ const Index = () => {
       <Navigation />
       <Hero />
       <ValueProposition />
-      <ProductShowcase />
-      <ProductSpecs />
+      <section id="products">
+        <ProductShowcase />
+        <ProductSpecs />
+      </section>
       <HowItWorks />
-      <ForRetailers />
-      <ForFarmers />
-      <Logistics />
-      <About />
+      <section id="retailers">
+        <ForRetailers />
+      </section>
+      <section id="farmers">
+        <ForFarmers />
+      </section>
+      <section id="logistics">
+        <Logistics />
+      </section>
+      <section id="about">
+        <About />
+      </section>
     </div>
   );
 };
