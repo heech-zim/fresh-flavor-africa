@@ -41,11 +41,11 @@ const ForRetailers = () => {
   ];
 
   const complianceDocs = [
-    { id: 'acir-certificate', name: 'ACIR Certificate 2024' },
-    { id: 'fda-registration', name: 'FDA Registration Proof' },
-    { id: 'paca-license', name: 'PACA License Documentation' },
-    { id: 'globalgap-certificates', name: 'GlobalG.A.P. Farm Certificates' },
-    { id: 'cold-chain-validation', name: 'Cold Chain Validation Report' }
+    { id: 'acir-certificate', name: 'ACIR Certificate 2024', keywords: ['acir', 'certificate'] },
+    { id: 'fda-registration', name: 'FDA Registration Proof', keywords: ['fda', 'registration'] },
+    { id: 'paca-license', name: 'PACA License Documentation', keywords: ['paca', 'license'] },
+    { id: 'globalgap-certificates', name: 'GlobalG.A.P. Farm Certificates', keywords: ['globalgap', 'global', 'gap', 'farm'] },
+    { id: 'cold-chain-validation', name: 'Cold Chain Validation Report', keywords: ['cold', 'chain', 'validation'] }
   ];
 
   // Load existing compliance files
@@ -59,9 +59,24 @@ const ForRetailers = () => {
 
       const fileMap: Record<string, string> = {};
       data?.forEach(file => {
-        // Extract document ID from filename
+        const fileName = file.name.toLowerCase();
+        
+        // Try to match files to documents using keywords
+        complianceDocs.forEach(doc => {
+          const hasKeyword = doc.keywords.some(keyword => 
+            fileName.includes(keyword.toLowerCase())
+          );
+          
+          if (hasKeyword && !fileMap[doc.id]) {
+            fileMap[doc.id] = file.name;
+          }
+        });
+        
+        // Fallback: try to match by exact ID prefix (original logic)
         const docId = file.name.split('-')[0];
-        fileMap[docId] = file.name;
+        if (!fileMap[docId]) {
+          fileMap[docId] = file.name;
+        }
       });
       setComplianceFiles(fileMap);
     } catch (error) {
