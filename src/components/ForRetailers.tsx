@@ -59,6 +59,7 @@ const ForRetailers = () => {
 
       const fileMap: Record<string, string> = {};
       data?.forEach(file => {
+        // Extract document ID from filename
         const docId = file.name.split('-')[0];
         fileMap[docId] = file.name;
       });

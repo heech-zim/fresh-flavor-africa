@@ -41,8 +41,20 @@ const Hero = () => {
               Request a Quote
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
-            <Button variant="outline" size="lg" className="border-white/30 hover:bg-white/10 backdrop-blur-sm text-lg px-8 py-6 text-green-600">
-              Download Spec Sheet
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="border-white/30 hover:bg-white/10 backdrop-blur-sm text-lg px-8 py-6 text-green-600"
+              onClick={() => {
+                const contactSection = document.getElementById('contact');
+                if (contactSection) {
+                  contactSection.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                  window.location.href = '/contact';
+                }
+              }}
+            >
+              Get in Touch
             </Button>
           </div>
 
