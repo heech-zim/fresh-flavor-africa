@@ -365,6 +365,8 @@ const ForRetailers = () => {
                     <option value="usa-west">USA - West Coast</option>
                     <option value="uk">United Kingdom</option>
                     <option value="eu">European Union</option>
+                    <option value="dubai">Dubai, UAE</option>
+                    <option value="doha">Doha, Qatar</option>
                   </select>
                 </div>
 
