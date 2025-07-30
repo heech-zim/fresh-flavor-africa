@@ -1,8 +1,27 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, Truck, CheckCircle, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const HowItWorks = () => {
+  const navigate = useNavigate();
+
+  const handleButtonClick = (action: string) => {
+    switch (action) {
+      case 'Submit Requirements':
+        navigate('/request-quote');
+        break;
+      case 'Track Shipment':
+        navigate('/tracking');
+        break;
+      case 'Receive Goods':
+        navigate('/delivery-confirmation');
+        break;
+      default:
+        break;
+    }
+  };
+
   const steps = [
     {
       number: '01',
@@ -76,6 +95,7 @@ const HowItWorks = () => {
                 <Button 
                   variant="outline" 
                   size="sm"
+                  onClick={() => handleButtonClick(step.action)}
                   className="group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-colors duration-300"
                 >
                   {step.action}
@@ -95,7 +115,11 @@ const HowItWorks = () => {
             <p className="text-muted-foreground mb-6">
               Join hundreds of retailers already sourcing premium African produce through Afreshia.
             </p>
-            <Button size="lg" className="bg-gradient-fresh hover:bg-primary-hover">
+            <Button 
+              size="lg" 
+              onClick={() => navigate('/request-quote')}
+              className="bg-gradient-fresh hover:bg-primary-hover"
+            >
               Request Your First Quote
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
