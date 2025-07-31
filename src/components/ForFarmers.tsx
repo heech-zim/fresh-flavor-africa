@@ -4,8 +4,59 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { CreditCard, GraduationCap, TrendingUp, Users, ArrowRight, Sprout } from 'lucide-react';
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const ForFarmers = () => {
+  const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    fullName: '',
+    phone: '',
+    email: '',
+    location: '',
+    farmSize: '',
+    currentCrops: '',
+    experience: ''
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const { error } = await supabase.functions.invoke('send-form-email', {
+        body: {
+          formType: 'farmer',
+          data: formData
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Application Submitted!",
+        description: "Our field agents will visit within 7 days to discuss opportunities.",
+      });
+
+      // Reset form
+      setFormData({
+        fullName: '',
+        phone: '',
+        email: '',
+        location: '',
+        farmSize: '',
+        currentCrops: '',
+        experience: ''
+      });
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit application. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
   const programs = [
     {
       icon: CreditCard,
@@ -123,84 +174,116 @@ const ForFarmers = () => {
                 </p>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-2 block">
+                        Full Name *
+                      </label>
+                      <Input 
+                        placeholder="Your full name" 
+                        value={formData.fullName}
+                        onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-2 block">
+                        Phone Number *
+                      </label>
+                      <Input 
+                        placeholder="+263 123 456 789" 
+                        value={formData.phone}
+                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                        required
+                      />
+                    </div>
+                  </div>
+
                   <div>
                     <label className="text-sm font-medium text-foreground mb-2 block">
-                      Full Name *
+                      Email Address
                     </label>
-                    <Input placeholder="Your full name" />
+                    <Input 
+                      type="email" 
+                      placeholder="your@email.com (optional)" 
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    />
                   </div>
+
                   <div>
                     <label className="text-sm font-medium text-foreground mb-2 block">
-                      Phone Number *
+                      Location *
                     </label>
-                    <Input placeholder="+263 123 456 789" />
+                    <select 
+                      className="w-full p-3 border border-input rounded-md bg-background text-foreground"
+                      value={formData.location}
+                      onChange={(e) => setFormData({...formData, location: e.target.value})}
+                      required
+                    >
+                      <option value="">Select your province</option>
+                      <option value="mashonaland-east">Mashonaland East</option>
+                      <option value="mashonaland-west">Mashonaland West</option>
+                      <option value="mashonaland-central">Mashonaland Central</option>
+                      <option value="manicaland">Manicaland</option>
+                      <option value="midlands">Midlands</option>
+                      <option value="masvingo">Masvingo</option>
+                      <option value="matabeleland-north">Matabeleland North</option>
+                      <option value="matabeleland-south">Matabeleland South</option>
+                    </select>
                   </div>
-                </div>
 
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Email Address
-                  </label>
-                  <Input type="email" placeholder="your@email.com (optional)" />
-                </div>
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">
+                      Farm Size
+                    </label>
+                    <select 
+                      className="w-full p-3 border border-input rounded-md bg-background text-foreground"
+                      value={formData.farmSize}
+                      onChange={(e) => setFormData({...formData, farmSize: e.target.value})}
+                    >
+                      <option value="">Select farm size</option>
+                      <option value="0.5-2">0.5 - 2 hectares</option>
+                      <option value="2-5">2 - 5 hectares</option>
+                      <option value="5-10">5 - 10 hectares</option>
+                      <option value="10+">10+ hectares</option>
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Location *
-                  </label>
-                  <select className="w-full p-3 border border-input rounded-md bg-background text-foreground">
-                    <option value="">Select your province</option>
-                    <option value="mashonaland-east">Mashonaland East</option>
-                    <option value="mashonaland-west">Mashonaland West</option>
-                    <option value="mashonaland-central">Mashonaland Central</option>
-                    <option value="manicaland">Manicaland</option>
-                    <option value="midlands">Midlands</option>
-                    <option value="masvingo">Masvingo</option>
-                    <option value="matabeleland-north">Matabeleland North</option>
-                    <option value="matabeleland-south">Matabeleland South</option>
-                  </select>
-                </div>
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">
+                      Current Crops
+                    </label>
+                    <Textarea 
+                      placeholder="What crops do you currently grow?"
+                      rows={3}
+                      value={formData.currentCrops}
+                      onChange={(e) => setFormData({...formData, currentCrops: e.target.value})}
+                    />
+                  </div>
 
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Farm Size
-                  </label>
-                  <select className="w-full p-3 border border-input rounded-md bg-background text-foreground">
-                    <option value="">Select farm size</option>
-                    <option value="0.5-2">0.5 - 2 hectares</option>
-                    <option value="2-5">2 - 5 hectares</option>
-                    <option value="5-10">5 - 10 hectares</option>
-                    <option value="10+">10+ hectares</option>
-                  </select>
-                </div>
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">
+                      Experience Level
+                    </label>
+                    <select 
+                      className="w-full p-3 border border-input rounded-md bg-background text-foreground"
+                      value={formData.experience}
+                      onChange={(e) => setFormData({...formData, experience: e.target.value})}
+                    >
+                      <option value="">Select experience</option>
+                      <option value="beginner">New to farming (0-2 years)</option>
+                      <option value="intermediate">Some experience (2-5 years)</option>
+                      <option value="experienced">Experienced (5+ years)</option>
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Current Crops
-                  </label>
-                  <Textarea 
-                    placeholder="What crops do you currently grow?"
-                    rows={3}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Experience Level
-                  </label>
-                  <select className="w-full p-3 border border-input rounded-md bg-background text-foreground">
-                    <option value="">Select experience</option>
-                    <option value="beginner">New to farming (0-2 years)</option>
-                    <option value="intermediate">Some experience (2-5 years)</option>
-                    <option value="experienced">Experienced (5+ years)</option>
-                  </select>
-                </div>
-
-                <Button className="w-full bg-gradient-fresh hover:bg-primary-hover" size="lg">
-                  Submit Application
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
+                  <Button type="submit" className="w-full bg-gradient-fresh hover:bg-primary-hover" size="lg">
+                    Submit Application
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                </form>
 
                 <p className="text-xs text-muted-foreground text-center">
                   Our field agents will visit within 7 days to discuss opportunities.

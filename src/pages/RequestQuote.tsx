@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import { Truck, Package, MapPin, Calculator } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const RequestQuote = () => {
   const { toast } = useToast();
@@ -38,25 +39,45 @@ const RequestQuote = () => {
     }
   }, [location]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Quote Request Submitted!",
-      description: "We'll get back to you within 24 hours with a detailed quote.",
-    });
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      company: '',
-      phone: '',
-      product: '',
-      quantity: '',
-      unit: '',
-      destination: '',
-      deliveryDate: '',
-      additionalInfo: ''
-    });
+    
+    try {
+      const { error } = await supabase.functions.invoke('send-form-email', {
+        body: {
+          formType: 'quote',
+          data: formData
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Quote Request Submitted!",
+        description: "We'll get back to you within 24 hours with a detailed quote.",
+      });
+      
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        company: '',
+        phone: '',
+        product: '',
+        quantity: '',
+        unit: '',
+        destination: '',
+        deliveryDate: '',
+        additionalInfo: ''
+      });
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit quote request. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleChange = (field: string, value: string) => {

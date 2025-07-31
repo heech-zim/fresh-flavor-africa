@@ -11,8 +11,55 @@ import { useState, useEffect } from 'react';
 
 const ForRetailers = () => {
   const { toast } = useToast();
+  const [formData, setFormData] = useState({
+    companyName: '',
+    contactPerson: '',
+    email: '',
+    phone: '',
+    tonnage: '',
+    products: '',
+    deliveryLocation: ''
+  });
   const [complianceFiles, setComplianceFiles] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const { error } = await supabase.functions.invoke('send-form-email', {
+        body: {
+          formType: 'retailer',
+          data: formData
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Application Submitted!",
+        description: "Our team will contact you within 24 hours with a detailed quote.",
+      });
+
+      // Reset form
+      setFormData({
+        companyName: '',
+        contactPerson: '',
+        email: '',
+        phone: '',
+        tonnage: '',
+        products: '',
+        deliveryLocation: ''
+      });
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit application. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
   const benefits = [
     {
       icon: DollarSign,
@@ -302,78 +349,111 @@ const ForRetailers = () => {
                 </p>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-2 block">
+                        Company Name *
+                      </label>
+                      <Input 
+                        placeholder="Your company name" 
+                        value={formData.companyName}
+                        onChange={(e) => setFormData({...formData, companyName: e.target.value})}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-2 block">
+                        Contact Person *
+                      </label>
+                      <Input 
+                        placeholder="Your full name" 
+                        value={formData.contactPerson}
+                        onChange={(e) => setFormData({...formData, contactPerson: e.target.value})}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-2 block">
+                        Email Address *
+                      </label>
+                      <Input 
+                        type="email" 
+                        placeholder="your@company.com" 
+                        value={formData.email}
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-foreground mb-2 block">
+                        Phone Number *
+                      </label>
+                      <Input 
+                        placeholder="+1 (555) 123-4567" 
+                        value={formData.phone}
+                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                        required
+                      />
+                    </div>
+                  </div>
+
                   <div>
                     <label className="text-sm font-medium text-foreground mb-2 block">
-                      Company Name *
+                      Expected Weekly Tonnage
                     </label>
-                    <Input placeholder="Your company name" />
+                    <select 
+                      className="w-full p-3 border border-input rounded-md bg-background text-foreground"
+                      value={formData.tonnage}
+                      onChange={(e) => setFormData({...formData, tonnage: e.target.value})}
+                    >
+                      <option value="">Select volume range</option>
+                      <option value="0.5-2">0.5 - 2 tonnes</option>
+                      <option value="2-5">2 - 5 tonnes</option>
+                      <option value="5-10">5 - 10 tonnes</option>
+                      <option value="10+">10+ tonnes</option>
+                    </select>
                   </div>
+
                   <div>
                     <label className="text-sm font-medium text-foreground mb-2 block">
-                      Contact Person *
+                      Products of Interest
                     </label>
-                    <Input placeholder="Your full name" />
+                    <Textarea 
+                      placeholder="Tell us which African produce you're interested in sourcing..."
+                      rows={3}
+                      value={formData.products}
+                      onChange={(e) => setFormData({...formData, products: e.target.value})}
+                    />
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-foreground mb-2 block">
-                      Email Address *
+                      Delivery Location
                     </label>
-                    <Input type="email" placeholder="your@company.com" />
+                    <select 
+                      className="w-full p-3 border border-input rounded-md bg-background text-foreground"
+                      value={formData.deliveryLocation}
+                      onChange={(e) => setFormData({...formData, deliveryLocation: e.target.value})}
+                    >
+                      <option value="">Select destination</option>
+                      <option value="usa-east">USA - East Coast</option>
+                      <option value="usa-west">USA - West Coast</option>
+                      <option value="uk">United Kingdom</option>
+                      <option value="eu">European Union</option>
+                      <option value="dubai">Dubai, UAE</option>
+                      <option value="doha">Doha, Qatar</option>
+                    </select>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">
-                      Phone Number *
-                    </label>
-                    <Input placeholder="+1 (555) 123-4567" />
-                  </div>
-                </div>
 
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Expected Weekly Tonnage
-                  </label>
-                  <select className="w-full p-3 border border-input rounded-md bg-background text-foreground">
-                    <option value="">Select volume range</option>
-                    <option value="0.5-2">0.5 - 2 tonnes</option>
-                    <option value="2-5">2 - 5 tonnes</option>
-                    <option value="5-10">5 - 10 tonnes</option>
-                    <option value="10+">10+ tonnes</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Products of Interest
-                  </label>
-                  <Textarea 
-                    placeholder="Tell us which African produce you're interested in sourcing..."
-                    rows={3}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Delivery Location
-                  </label>
-                  <select className="w-full p-3 border border-input rounded-md bg-background text-foreground">
-                    <option value="">Select destination</option>
-                    <option value="usa-east">USA - East Coast</option>
-                    <option value="usa-west">USA - West Coast</option>
-                    <option value="uk">United Kingdom</option>
-                    <option value="eu">European Union</option>
-                    <option value="dubai">Dubai, UAE</option>
-                    <option value="doha">Doha, Qatar</option>
-                  </select>
-                </div>
-
-                <Button className="w-full bg-gradient-fresh hover:bg-primary-hover" size="lg">
-                  Submit Application
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
+                  <Button type="submit" className="w-full bg-gradient-fresh hover:bg-primary-hover" size="lg">
+                    Submit Application
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                </form>
 
                 <p className="text-xs text-muted-foreground text-center">
                   Our team will contact you within 24 hours with a detailed quote.
