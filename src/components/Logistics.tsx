@@ -1,8 +1,68 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Plane, Truck, Ship, Clock, Shield, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Logistics = () => {
+  const navigate = useNavigate();
+
+  const handleDiscussLogistics = () => {
+    navigate('/contact');
+  };
+
+  const handleDownloadGuide = () => {
+    // Create a simple shipping guide content
+    const guideContent = `AFRESHIA SHIPPING GUIDE
+
+Global Cold Chain Logistics for Zimbabwean Fresh Produce
+
+SUPPLY CHAIN OVERVIEW:
+• Day 0: Harvest from GlobalG.A.P. certified farms
+• Day 0-1: Cold storage processing (2-4°C)
+• Day 1-2: Air freight from Harare Airport (HRE)
+• Day 2-3: International hub distribution
+
+INTERNATIONAL DESTINATIONS:
+• USA East Coast: JFK/MIA - 48-72 hours
+• USA West Coast: LAX/SFO - 52-76 hours
+• United Kingdom: LHR/MAN - 44-68 hours
+• European Union: AMS/CDG - 46-70 hours
+
+CIP INCOTERMS:
+Afreshia covers:
+✓ Transportation to designated port
+✓ Cargo insurance (110% invoice value)
+✓ Export documentation & customs
+✓ Temperature monitoring (2-4°C)
+
+Customer responsibility:
+• Import duties and local taxes
+• Final mile delivery from international hub
+
+INSURANCE COVERAGE:
+• Comprehensive door-to-door protection
+• 24/7 claim support with quick settlements
+• Temperature guarantee with full compensation
+
+CONTACT:
+Email: info@afreshia.com
+Website: www.afreshia.com
+
+For custom logistics solutions and high-volume orders, 
+contact our specialized logistics team.`;
+
+    const blob = new Blob([guideContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'Afreshia-Shipping-Guide.txt';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
   const supplyChainSteps = [
     {
       icon: MapPin,
@@ -218,12 +278,19 @@ const Logistics = () => {
               orders, seasonal campaigns, or specialized handling requirements.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-gradient-fresh hover:bg-primary-hover text-primary-foreground px-6 py-3 rounded-lg font-medium transition-colors duration-200">
+              <Button 
+                onClick={handleDiscussLogistics}
+                className="bg-gradient-fresh hover:bg-primary-hover text-primary-foreground px-6 py-3 rounded-lg font-medium transition-colors duration-200"
+              >
                 Discuss Logistics
-              </button>
-              <button className="border border-border hover:bg-muted text-foreground px-6 py-3 rounded-lg font-medium transition-colors duration-200">
+              </Button>
+              <Button 
+                onClick={handleDownloadGuide}
+                variant="outline"
+                className="border border-border hover:bg-muted text-foreground px-6 py-3 rounded-lg font-medium transition-colors duration-200"
+              >
                 Download Shipping Guide
-              </button>
+              </Button>
             </div>
           </div>
         </div>
