@@ -88,10 +88,11 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const emailResponse = await resend.emails.send({
-      from: "Afreshia Forms <onboarding@resend.dev>",
+      from: "Afreshia Forms <no-reply@afreshia.com>",
       to: ["info@afreshia.com"],
       subject: subject,
       html: htmlContent,
+      reply_to: data.email || "info@afreshia.com",
     });
 
     console.log("Email sent successfully:", emailResponse);
