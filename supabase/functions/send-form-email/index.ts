@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const MAILGUN_API_KEY = Deno.env.get("MAILGUN_API_KEY");
+const MAILGUN_DOMAIN = Deno.env.get("MAILGUN_DOMAIN") || "afreshia.com";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -87,17 +87,30 @@ const handler = async (req: Request): Promise<Response> => {
         throw new Error("Invalid form type");
     }
 
-    const emailResponse = await resend.emails.send({
-      from: "Afreshia Forms <onboarding@resend.dev>",
-      to: ["info@afreshia.com"],
-      subject: subject,
-      html: htmlContent,
-      reply_to: data.email || "info@afreshia.com",
-    });
+    const formData = new FormData();
+    formData.append("from", `Afreshia Forms <noreply@${MAILGUN_DOMAIN}>`);
+    formData.append("to", "info@afreshia.com");
+    formData.append("subject", subject);
+    formData.append("html", htmlContent);
+    if (data.email) {
+      formData.append("h:Reply-To", data.email);
+    }
 
-    console.log("Email sent successfully:", emailResponse);
+    const emailResponse = await fetch(
+      `https://api.mailgun.net/v3/${MAILGUN_DOMAIN}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${btoa(`api:${MAILGUN_API_KEY}`)}`,
+        },
+        body: formData,
+      }
+    );
 
-    return new Response(JSON.stringify({ success: true, id: emailResponse.data?.id }), {
+    const result = await emailResponse.json();
+    console.log("Email sent successfully:", result);
+
+    return new Response(JSON.stringify({ success: true, id: result.id }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
