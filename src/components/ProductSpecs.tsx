@@ -128,6 +128,82 @@ const ProductSpecs = () => {
         fiber: '10.4g/100g',
         iron: '1.6mg/100g'
       }
+    },
+    {
+      id: 'birds-eye-chilli',
+      name: "Bird's Eye Chilli",
+      category: 'Vegetables',
+      specifications: {
+        size: '2-4cm length',
+        color: 'Bright red when ripe',
+        texture: 'Firm, very hot',
+        shelfLife: '10-14 days at 8-10°C',
+        packaging: '1kg ventilated containers',
+        certification: 'ACIR Certified'
+      },
+      nutritional: {
+        vitamin_c: '242mg/100g',
+        vitamin_a: '48mcg/100g',
+        capsaicin: '100,000-225,000 SHU',
+        fiber: '1.5g/100g'
+      }
+    },
+    {
+      id: 'mange-tout',
+      name: 'Mange Tout',
+      category: 'Vegetables',
+      specifications: {
+        size: '5-8cm length',
+        color: 'Bright green',
+        texture: 'Crisp, tender pods',
+        shelfLife: '5-7 days at 0-2°C',
+        packaging: '2kg perforated bags',
+        certification: 'FDA Approved'
+      },
+      nutritional: {
+        vitamin_c: '60mg/100g',
+        vitamin_k: '25mcg/100g',
+        fiber: '2.6g/100g',
+        folate: '42mcg/100g'
+      }
+    },
+    {
+      id: 'fine-beans',
+      name: 'Fine Beans',
+      category: 'Vegetables',
+      specifications: {
+        size: '10-14cm length, 4-6mm width',
+        color: 'Dark green',
+        texture: 'Tender, stringless',
+        shelfLife: '7-10 days at 2-4°C',
+        packaging: '2kg ventilated boxes',
+        certification: 'ACIR Certified'
+      },
+      nutritional: {
+        vitamin_c: '12mg/100g',
+        vitamin_k: '43mcg/100g',
+        fiber: '2.7g/100g',
+        folate: '33mcg/100g'
+      }
+    },
+    {
+      id: 'sugar-snap-peas',
+      name: 'Sugar Snap Peas',
+      category: 'Vegetables',
+      specifications: {
+        size: '7-10cm length',
+        color: 'Bright green',
+        texture: 'Crisp, sweet pods',
+        shelfLife: '5-8 days at 0-2°C',
+        packaging: '2kg clamshell containers',
+        certification: 'FDA Approved'
+      },
+      nutritional: {
+        vitamin_c: '60mg/100g',
+        vitamin_a: '54mcg/100g',
+        fiber: '2.6g/100g',
+        protein: '2.8g/100g'
+      }
     }
   ];
 

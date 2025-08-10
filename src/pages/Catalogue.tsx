@@ -27,6 +27,10 @@ import collardGreensImage from '@/assets/collard-greens.jpg';
 import babyCornImage from '@/assets/baby-corn.jpg';
 import butternutSquashImage from '@/assets/butternut-squash.jpg';
 import passionFruitImage from '@/assets/passion-fruit.jpg';
+import birdsEyeChilliImage from '@/assets/birds-eye-chilli.jpg';
+import mangeToutImage from '@/assets/mange-tout.jpg';
+import fineBeansImage from '@/assets/fine-beans.jpg';
+import sugarSnapPeasImage from '@/assets/sugar-snap-peas.jpg';
 
 const Catalogue = () => {
   const navigate = useNavigate();
@@ -114,6 +118,58 @@ const Catalogue = () => {
       image: passionFruitImage,
       price: '$6.80/kg',
       availability: 'Seasonal'
+    },
+    {
+      id: 7,
+      name: "Bird's Eye Chilli",
+      category: 'Vegetables',
+      season: 'Year-round',
+      origin: 'Mashonaland West',
+      moq: '100kg',
+      status: 'ACIR Certified',
+      description: 'Fiery small chillies perfect for spice lovers and culinary applications.',
+      image: birdsEyeChilliImage,
+      price: '$8.50/kg',
+      availability: 'In Stock'
+    },
+    {
+      id: 8,
+      name: 'Mange Tout',
+      category: 'Vegetables',
+      season: 'May-Oct',
+      origin: 'Masvingo',
+      moq: '250kg',
+      status: 'FDA Approved',
+      description: 'Tender snow peas with edible pods, crisp texture and sweet flavor.',
+      image: mangeToutImage,
+      price: '$5.20/kg',
+      availability: 'Seasonal'
+    },
+    {
+      id: 9,
+      name: 'Fine Beans',
+      category: 'Vegetables',
+      season: 'Apr-Nov',
+      origin: 'Midlands',
+      moq: '300kg',
+      status: 'ACIR Certified',
+      description: 'Premium thin green beans with excellent texture and consistent quality.',
+      image: fineBeansImage,
+      price: '$4.80/kg',
+      availability: 'Seasonal'
+    },
+    {
+      id: 10,
+      name: 'Sugar Snap Peas',
+      category: 'Vegetables',
+      season: 'Jun-Sep',
+      origin: 'Manicaland',
+      moq: '200kg',
+      status: 'FDA Approved',
+      description: 'Sweet, crunchy pea pods perfect for fresh consumption and export.',
+      image: sugarSnapPeasImage,
+      price: '$5.90/kg',
+      availability: 'Seasonal'
     }
   ];
 
@@ -128,7 +184,7 @@ const Catalogue = () => {
   });
 
   const categories = ['all', 'Vegetables', 'Roots & Tubers', 'Leafy Greens', 'Fruits'];
-  const seasons = ['all', 'Year-round', 'Mar-Aug', 'Oct-Apr', 'Apr-Sep', 'Dec-Jun'];
+  const seasons = ['all', 'Year-round', 'Mar-Aug', 'Oct-Apr', 'Apr-Sep', 'Dec-Jun', 'May-Oct', 'Apr-Nov', 'Jun-Sep'];
   const certifications = ['all', 'ACIR Certified', 'FDA Approved'];
 
   return (

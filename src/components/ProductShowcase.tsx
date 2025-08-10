@@ -12,6 +12,10 @@ import collardGreensImage from '@/assets/collard-greens.jpg';
 import babyCornImage from '@/assets/baby-corn.jpg';
 import butternutSquashImage from '@/assets/butternut-squash.jpg';
 import passionFruitImage from '@/assets/passion-fruit.jpg';
+import birdsEyeChilliImage from '@/assets/birds-eye-chilli.jpg';
+import mangeToutImage from '@/assets/mange-tout.jpg';
+import fineBeansImage from '@/assets/fine-beans.jpg';
+import sugarSnapPeasImage from '@/assets/sugar-snap-peas.jpg';
 
 const ProductShowcase = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -79,6 +83,46 @@ const ProductShowcase = () => {
       status: 'FDA Approved',
       description: 'Aromatic passion fruit with high pulp content.',
       image: passionFruitImage
+    },
+    {
+      name: "Bird's Eye Chilli",
+      category: 'Vegetables',
+      season: 'Year-round',
+      origin: 'Mashonaland West',
+      moq: '100kg',
+      status: 'ACIR Certified',
+      description: 'Fiery small chillies perfect for spice lovers and culinary use.',
+      image: birdsEyeChilliImage
+    },
+    {
+      name: 'Mange Tout',
+      category: 'Vegetables',
+      season: 'May-Oct',
+      origin: 'Masvingo',
+      moq: '250kg',
+      status: 'FDA Approved',
+      description: 'Tender snow peas with edible pods, crisp and sweet.',
+      image: mangeToutImage
+    },
+    {
+      name: 'Fine Beans',
+      category: 'Vegetables',
+      season: 'Apr-Nov',
+      origin: 'Midlands',
+      moq: '300kg',
+      status: 'ACIR Certified',
+      description: 'Premium thin green beans with excellent texture and flavor.',
+      image: fineBeansImage
+    },
+    {
+      name: 'Sugar Snap Peas',
+      category: 'Vegetables',
+      season: 'Jun-Sep',
+      origin: 'Manicaland',
+      moq: '200kg',
+      status: 'FDA Approved',
+      description: 'Sweet, crunchy pea pods perfect for fresh consumption.',
+      image: sugarSnapPeasImage
     }
   ];
 
