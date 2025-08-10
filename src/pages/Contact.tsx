@@ -137,6 +137,7 @@ const Contact = () => {
                     <h3 className="font-semibold text-foreground mb-1">Address</h3>
                     <p className="text-muted-foreground">
                       Harare, Zimbabwe<br />
+                      <span className="text-sm">Registered in UK & USA</span><br />
                       Serving Africa & Global Markets
                     </p>
                   </div>

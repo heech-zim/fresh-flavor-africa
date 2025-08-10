@@ -53,7 +53,7 @@ const About = () => {
             Connecting African Agriculture to the World
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Founded in Zimbabwe, Afreshia has grown to become a trusted bridge between African farmers 
+            Founded in Zimbabwe and now registered in both the UK and USA, Afreshia has grown to become a trusted bridge between African farmers 
             and global markets, specializing in fresh produce export with a commitment to quality, 
             sustainability, and community empowerment.
           </p>
@@ -78,7 +78,8 @@ const About = () => {
               <p>
                 Today, Afreshia exports premium fresh produce to over 50 destinations worldwide, 
                 maintaining the highest quality standards while ensuring fair compensation for 
-                our farming partners.
+                our farming partners. With company registrations in both the UK and USA, we serve 
+                global markets with local expertise and regulatory compliance.
               </p>
             </div>
           </div>
