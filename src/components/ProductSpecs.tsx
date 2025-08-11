@@ -224,8 +224,8 @@ const ProductSpecs = () => {
       files?.forEach(file => {
         // Handle different file naming patterns
         let productId = file.name.replace('.pdf', '').replace(/_compressed$/, '').replace(/ product spec$/, '');
-        // Convert to kebab-case to match our product IDs
-        productId = productId.toLowerCase().replace(/\s+/g, '-');
+        // Convert to kebab-case to match our product IDs and handle apostrophes
+        productId = productId.toLowerCase().replace(/['`]/g, '').replace(/\s+/g, '-');
         fileMap[productId] = file.name;
       });
       setSpecFiles(fileMap);
