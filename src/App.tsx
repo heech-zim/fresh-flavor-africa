@@ -9,6 +9,8 @@ import RequestQuote from "./pages/RequestQuote";
 import Catalogue from "./pages/Catalogue";
 import Tracking from "./pages/Tracking";
 import DeliveryConfirmation from "./pages/DeliveryConfirmation";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +28,8 @@ const App = () => (
           <Route path="/catalogue" element={<Catalogue />} />
           <Route path="/tracking" element={<Tracking />} />
           <Route path="/delivery-confirmation" element={<DeliveryConfirmation />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
