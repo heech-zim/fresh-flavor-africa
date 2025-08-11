@@ -30,7 +30,7 @@ const AdminDashboard = () => {
     setUser(session.user);
 
     // Check if user is admin
-    const { data: roles } = await supabase
+    const { data: roles } = await (supabase as any)
       .from('user_roles')
       .select('role')
       .eq('user_id', session.user.id)
@@ -48,13 +48,13 @@ const AdminDashboard = () => {
 
   const loadData = async () => {
     // Load contact messages
-    const { data: contacts } = await supabase
+    const { data: contacts } = await (supabase as any)
       .from('contact_messages')
       .select('*')
       .order('created_at', { ascending: false });
 
     // Load quote requests
-    const { data: quotes } = await supabase
+    const { data: quotes } = await (supabase as any)
       .from('quote_requests')
       .select('*')
       .order('created_at', { ascending: false });

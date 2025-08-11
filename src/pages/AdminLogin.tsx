@@ -19,7 +19,7 @@ const AdminLogin = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         // Check if user is admin
-        const { data: roles } = await supabase
+        const { data: roles } = await (supabase as any)
           .from('user_roles')
           .select('role')
           .eq('user_id', session.user.id)
@@ -46,7 +46,7 @@ const AdminLogin = () => {
       if (error) throw error;
 
       // Check if user is admin
-      const { data: roles } = await supabase
+      const { data: roles } = await (supabase as any)
         .from('user_roles')
         .select('role')
         .eq('user_id', data.user.id)
