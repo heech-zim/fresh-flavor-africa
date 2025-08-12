@@ -43,14 +43,35 @@ const RequestQuote = () => {
     e.preventDefault();
     
     try {
-      const { error } = await supabase.functions.invoke('send-form-email', {
+      // Save to database
+      const { error: dbError } = await (supabase as any)
+        .from('quote_requests')
+        .insert([{
+          company_name: formData.company || 'Individual',
+          contact_person: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          product_type: formData.product,
+          quantity: `${formData.quantity} ${formData.unit}`,
+          delivery_location: formData.destination,
+          delivery_date: formData.deliveryDate || null,
+          additional_requirements: formData.additionalInfo
+        }]);
+
+      if (dbError) throw dbError;
+
+      // Send email notification
+      const { error: emailError } = await supabase.functions.invoke('send-form-email', {
         body: {
           formType: 'quote',
           data: formData
         }
       });
 
-      if (error) throw error;
+      if (emailError) {
+        console.error('Email sending failed:', emailError);
+        // Don't throw error here, request was saved to database
+      }
 
       toast({
         title: "Quote Request Submitted!",

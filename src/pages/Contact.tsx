@@ -33,14 +33,31 @@ const Contact = () => {
     e.preventDefault();
     
     try {
-      const { error } = await supabase.functions.invoke('send-form-email', {
+      // Save to database
+      const { error: dbError } = await (supabase as any)
+        .from('contact_messages')
+        .insert([{
+          name: formData.name,
+          email: formData.email,
+          company: formData.company,
+          phone: formData.phone,
+          message: `Subject: ${formData.subject}\n\n${formData.message}`
+        }]);
+
+      if (dbError) throw dbError;
+
+      // Send email notification
+      const { error: emailError } = await supabase.functions.invoke('send-form-email', {
         body: {
           formType: 'contact',
           data: formData
         }
       });
 
-      if (error) throw error;
+      if (emailError) {
+        console.error('Email sending failed:', emailError);
+        // Don't throw error here, message was saved to database
+      }
 
       toast({
         title: "Message sent successfully!",
