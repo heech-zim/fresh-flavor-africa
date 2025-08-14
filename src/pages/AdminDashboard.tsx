@@ -6,6 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { useForm } from 'react-hook-form';
+import { useToast } from '@/hooks/use-toast';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -13,7 +22,21 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [contactMessages, setContactMessages] = useState([]);
   const [quoteRequests, setQuoteRequests] = useState([]);
+  const [contentItems, setContentItems] = useState([]);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingContent, setEditingContent] = useState(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const form = useForm({
+    defaultValues: {
+      section_key: '',
+      title: '',
+      content: '',
+      image_url: '',
+      is_active: true
+    }
+  });
 
   useEffect(() => {
     checkAuth();
@@ -59,8 +82,95 @@ const AdminDashboard = () => {
       .select('*')
       .order('created_at', { ascending: false });
 
+    // Load content items
+    const { data: content } = await (supabase as any)
+      .from('content_management')
+      .select('*')
+      .order('created_at', { ascending: false });
+
     setContactMessages(contacts || []);
     setQuoteRequests(quotes || []);
+    setContentItems(content || []);
+  };
+
+  const handleContentSubmit = async (data: any) => {
+    try {
+      if (editingContent) {
+        const { error } = await (supabase as any)
+          .from('content_management')
+          .update(data)
+          .eq('id', editingContent.id);
+        if (error) throw error;
+        toast({ title: "Content updated successfully!" });
+      } else {
+        const { error } = await (supabase as any)
+          .from('content_management')
+          .insert([data]);
+        if (error) throw error;
+        toast({ title: "Content created successfully!" });
+      }
+      
+      setDialogOpen(false);
+      setEditingContent(null);
+      form.reset();
+      loadData();
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to save content", 
+        variant: "destructive" 
+      });
+    }
+  };
+
+  const handleEditContent = (content: any) => {
+    setEditingContent(content);
+    form.reset({
+      section_key: content.section_key,
+      title: content.title || '',
+      content: content.content || '',
+      image_url: content.image_url || '',
+      is_active: content.is_active
+    });
+    setDialogOpen(true);
+  };
+
+  const handleDeleteContent = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this content?')) return;
+    
+    try {
+      const { error } = await (supabase as any)
+        .from('content_management')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      toast({ title: "Content deleted successfully!" });
+      loadData();
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to delete content", 
+        variant: "destructive" 
+      });
+    }
+  };
+
+  const handleToggleActive = async (id: string, currentStatus: boolean) => {
+    try {
+      const { error } = await (supabase as any)
+        .from('content_management')
+        .update({ is_active: !currentStatus })
+        .eq('id', id);
+      if (error) throw error;
+      toast({ title: "Content status updated!" });
+      loadData();
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to update content status", 
+        variant: "destructive" 
+      });
+    }
   };
 
   const handleLogout = async () => {
@@ -170,10 +280,180 @@ const AdminDashboard = () => {
           <TabsContent value="content">
             <Card>
               <CardHeader>
-                <CardTitle>Content Management</CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Content Management ({contentItems.length})</CardTitle>
+                  <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={() => {
+                        setEditingContent(null);
+                        form.reset({
+                          section_key: '',
+                          title: '',
+                          content: '',
+                          image_url: '',
+                          is_active: true
+                        });
+                      }}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Content
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>
+                          {editingContent ? 'Edit Content' : 'Add New Content'}
+                        </DialogTitle>
+                      </DialogHeader>
+                      <Form {...form}>
+                        <form onSubmit={form.handleSubmit(handleContentSubmit)} className="space-y-4">
+                          <FormField
+                            control={form.control}
+                            name="section_key"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Section Key</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="e.g., hero, about, features" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="title"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Title</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Content title" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="content"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Content</FormLabel>
+                                <FormControl>
+                                  <Textarea 
+                                    placeholder="Content description" 
+                                    className="min-h-[100px]"
+                                    {...field} 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="image_url"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Image URL</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="https://example.com/image.jpg" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="is_active"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                <div className="space-y-0.5">
+                                  <FormLabel>Active Status</FormLabel>
+                                  <div className="text-sm text-muted-foreground">
+                                    Make this content visible on the website
+                                  </div>
+                                </div>
+                                <FormControl>
+                                  <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                              Cancel
+                            </Button>
+                            <Button type="submit">
+                              {editingContent ? 'Update' : 'Create'}
+                            </Button>
+                          </div>
+                        </form>
+                      </Form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">Content management features coming soon...</p>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Section</TableHead>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Last Updated</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {contentItems.map((item: any) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium">{item.section_key}</TableCell>
+                        <TableCell>{item.title || 'No title'}</TableCell>
+                        <TableCell>
+                          <Badge variant={item.is_active ? 'default' : 'secondary'}>
+                            {item.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(item.updated_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleToggleActive(item.id, item.is_active)}
+                            >
+                              {item.is_active ? 'Deactivate' : 'Activate'}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditContent(item)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteContent(item.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {contentItems.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No content items found. Create your first content item above.
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
