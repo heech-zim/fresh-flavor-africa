@@ -62,7 +62,7 @@ const ForFarmers = () => {
       icon: CreditCard,
       title: 'Input Credit Program',
       description: 'Get seeds, fertilizers, and tools upfront. Pay back after harvest with guaranteed purchase.',
-      benefit: 'Up to $2,000 credit'
+      benefit: 'Up to $20,000 credit'
     },
     {
       icon: GraduationCap,
