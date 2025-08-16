@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -23,8 +23,12 @@ const AdminDashboard = () => {
   const [contactMessages, setContactMessages] = useState([]);
   const [quoteRequests, setQuoteRequests] = useState([]);
   const [contentItems, setContentItems] = useState([]);
+  const [products, setProducts] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingContent, setEditingContent] = useState(null);
+  const [productDialogOpen, setProductDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [uploadingSpec, setUploadingSpec] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -34,6 +38,19 @@ const AdminDashboard = () => {
       title: '',
       content: '',
       image_url: '',
+      is_active: true
+    }
+  });
+
+  const productForm = useForm({
+    defaultValues: {
+      name: '',
+      category: '',
+      description: '',
+      physical_specs: '',
+      nutritional_info: '',
+      certifications: '',
+      storage_requirements: '',
       is_active: true
     }
   });
@@ -88,9 +105,16 @@ const AdminDashboard = () => {
       .select('*')
       .order('created_at', { ascending: false });
 
+    // Load products
+    const { data: productData } = await (supabase as any)
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false });
+
     setContactMessages(contacts || []);
     setQuoteRequests(quotes || []);
     setContentItems(content || []);
+    setProducts(productData || []);
   };
 
   const handleContentSubmit = async (data: any) => {
@@ -173,6 +197,136 @@ const AdminDashboard = () => {
     }
   };
 
+  // Product management functions
+  const handleProductSubmit = async (data: any) => {
+    try {
+      const productData = {
+        ...data,
+        physical_specs: data.physical_specs ? JSON.parse(data.physical_specs) : null,
+        nutritional_info: data.nutritional_info ? JSON.parse(data.nutritional_info) : null,
+        certifications: data.certifications ? data.certifications.split(',').map((cert: string) => cert.trim()) : []
+      };
+
+      if (editingProduct) {
+        const { error } = await (supabase as any)
+          .from('products')
+          .update(productData)
+          .eq('id', editingProduct.id);
+        if (error) throw error;
+        toast({ title: "Product updated successfully!" });
+      } else {
+        const { error } = await (supabase as any)
+          .from('products')
+          .insert([productData]);
+        if (error) throw error;
+        toast({ title: "Product created successfully!" });
+      }
+      
+      setProductDialogOpen(false);
+      setEditingProduct(null);
+      productForm.reset();
+      loadData();
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to save product", 
+        variant: "destructive" 
+      });
+    }
+  };
+
+  const handleEditProduct = (product: any) => {
+    setEditingProduct(product);
+    productForm.reset({
+      name: product.name,
+      category: product.category,
+      description: product.description || '',
+      physical_specs: product.physical_specs ? JSON.stringify(product.physical_specs) : '',
+      nutritional_info: product.nutritional_info ? JSON.stringify(product.nutritional_info) : '',
+      certifications: product.certifications ? product.certifications.join(', ') : '',
+      storage_requirements: product.storage_requirements || '',
+      is_active: product.is_active
+    });
+    setProductDialogOpen(true);
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+    
+    try {
+      const { error } = await (supabase as any)
+        .from('products')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      toast({ title: "Product deleted successfully!" });
+      loadData();
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to delete product", 
+        variant: "destructive" 
+      });
+    }
+  };
+
+  const handleToggleProductActive = async (id: string, currentStatus: boolean) => {
+    try {
+      const { error } = await (supabase as any)
+        .from('products')
+        .update({ is_active: !currentStatus })
+        .eq('id', id);
+      if (error) throw error;
+      toast({ title: "Product status updated!" });
+      loadData();
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to update product status", 
+        variant: "destructive" 
+      });
+    }
+  };
+
+  const handleSpecSheetUpload = async (productId: string, file: File) => {
+    if (!file || file.type !== 'application/pdf') {
+      toast({ 
+        title: "Error", 
+        description: "Please select a PDF file", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    setUploadingSpec(true);
+    try {
+      const fileName = `${productId}-spec-sheet.pdf`;
+      const { error: uploadError } = await supabase.storage
+        .from('product-specs')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { error: updateError } = await (supabase as any)
+        .from('products')
+        .update({ spec_sheet_url: fileName })
+        .eq('id', productId);
+
+      if (updateError) throw updateError;
+
+      toast({ title: "Spec sheet uploaded successfully!" });
+      loadData();
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to upload spec sheet", 
+        variant: "destructive" 
+      });
+    } finally {
+      setUploadingSpec(false);
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/');
@@ -200,10 +354,11 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="messages" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="messages">Contact Messages</TabsTrigger>
             <TabsTrigger value="quotes">Quote Requests</TabsTrigger>
             <TabsTrigger value="content">Content Management</TabsTrigger>
+            <TabsTrigger value="products">Product Management</TabsTrigger>
           </TabsList>
 
           <TabsContent value="messages">
@@ -452,6 +607,269 @@ const AdminDashboard = () => {
                 {contentItems.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     No content items found. Create your first content item above.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="products">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Product Management ({products.length})</CardTitle>
+                  <Dialog open={productDialogOpen} onOpenChange={setProductDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={() => {
+                        setEditingProduct(null);
+                        productForm.reset({
+                          name: '',
+                          category: '',
+                          description: '',
+                          physical_specs: '',
+                          nutritional_info: '',
+                          certifications: '',
+                          storage_requirements: '',
+                          is_active: true
+                        });
+                      }}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Product
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>
+                          {editingProduct ? 'Edit Product' : 'Add New Product'}
+                        </DialogTitle>
+                      </DialogHeader>
+                      <Form {...productForm}>
+                        <form onSubmit={productForm.handleSubmit(handleProductSubmit)} className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={productForm.control}
+                              name="name"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Product Name</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="e.g., Baby Corn" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={productForm.control}
+                              name="category"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Category</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="e.g., Vegetables" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <FormField
+                            control={productForm.control}
+                            name="description"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Description</FormLabel>
+                                <FormControl>
+                                  <Textarea 
+                                    placeholder="Product description" 
+                                    className="min-h-[80px]"
+                                    {...field} 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={productForm.control}
+                              name="physical_specs"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Physical Specs (JSON)</FormLabel>
+                                  <FormControl>
+                                    <Textarea 
+                                      placeholder='{"size": "4-6cm", "weight": "15-20g"}' 
+                                      className="min-h-[80px]"
+                                      {...field} 
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={productForm.control}
+                              name="nutritional_info"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Nutritional Info (JSON)</FormLabel>
+                                  <FormControl>
+                                    <Textarea 
+                                      placeholder='{"calories": "26 per 100g", "vitamin_c": "High"}' 
+                                      className="min-h-[80px]"
+                                      {...field} 
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <FormField
+                            control={productForm.control}
+                            name="certifications"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Certifications (comma-separated)</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="e.g., GLOBAL GAP, Organic, Fair Trade" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={productForm.control}
+                            name="storage_requirements"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Storage Requirements</FormLabel>
+                                <FormControl>
+                                  <Textarea 
+                                    placeholder="Storage temperature, humidity, etc." 
+                                    className="min-h-[60px]"
+                                    {...field} 
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={productForm.control}
+                            name="is_active"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                <div className="space-y-0.5">
+                                  <FormLabel>Active Status</FormLabel>
+                                  <div className="text-sm text-muted-foreground">
+                                    Make this product visible on the website
+                                  </div>
+                                </div>
+                                <FormControl>
+                                  <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button type="button" variant="outline" onClick={() => setProductDialogOpen(false)}>
+                              Cancel
+                            </Button>
+                            <Button type="submit">
+                              {editingProduct ? 'Update' : 'Create'}
+                            </Button>
+                          </div>
+                        </form>
+                      </Form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Spec Sheet</TableHead>
+                      <TableHead>Last Updated</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {products.map((product: any) => (
+                      <TableRow key={product.id}>
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell>{product.category}</TableCell>
+                        <TableCell>
+                          <Badge variant={product.is_active ? 'default' : 'secondary'}>
+                            {product.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {product.spec_sheet_url ? (
+                              <Badge variant="outline">Available</Badge>
+                            ) : (
+                              <Badge variant="secondary">None</Badge>
+                            )}
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                accept=".pdf"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleSpecSheetUpload(product.id, file);
+                                }}
+                              />
+                              <Button variant="ghost" size="sm" disabled={uploadingSpec}>
+                                <Upload className="h-4 w-4" />
+                              </Button>
+                            </label>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(product.updated_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleToggleProductActive(product.id, product.is_active)}
+                            >
+                              {product.is_active ? 'Deactivate' : 'Activate'}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditProduct(product)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteProduct(product.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {products.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No products found. Create your first product above.
                   </div>
                 )}
               </CardContent>
