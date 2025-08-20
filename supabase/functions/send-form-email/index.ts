@@ -13,6 +13,20 @@ interface FormSubmissionRequest {
   data: Record<string, any>;
 }
 
+// HTML sanitization function to prevent injection attacks
+const sanitizeHTML = (input: any): string => {
+  if (input === null || input === undefined) return '';
+  
+  const str = String(input);
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;');
+};
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -30,13 +44,13 @@ const handler = async (req: Request): Promise<Response> => {
         subject = "New Retailer Application - Afreshia";
         htmlContent = `
           <h2>New Retailer Application</h2>
-          <p><strong>Company Name:</strong> ${data.companyName}</p>
-          <p><strong>Contact Person:</strong> ${data.contactPerson}</p>
-          <p><strong>Email:</strong> ${data.email}</p>
-          <p><strong>Phone:</strong> ${data.phone}</p>
-          <p><strong>Expected Weekly Tonnage:</strong> ${data.tonnage}</p>
-          <p><strong>Products of Interest:</strong> ${data.products}</p>
-          <p><strong>Delivery Location:</strong> ${data.deliveryLocation}</p>
+          <p><strong>Company Name:</strong> ${sanitizeHTML(data.companyName)}</p>
+          <p><strong>Contact Person:</strong> ${sanitizeHTML(data.contactPerson)}</p>
+          <p><strong>Email:</strong> ${sanitizeHTML(data.email)}</p>
+          <p><strong>Phone:</strong> ${sanitizeHTML(data.phone)}</p>
+          <p><strong>Expected Weekly Tonnage:</strong> ${sanitizeHTML(data.tonnage)}</p>
+          <p><strong>Products of Interest:</strong> ${sanitizeHTML(data.products)}</p>
+          <p><strong>Delivery Location:</strong> ${sanitizeHTML(data.deliveryLocation)}</p>
         `;
         break;
 
@@ -44,13 +58,13 @@ const handler = async (req: Request): Promise<Response> => {
         subject = "New Farmer Application - Afreshia";
         htmlContent = `
           <h2>New Farmer Application</h2>
-          <p><strong>Full Name:</strong> ${data.fullName}</p>
-          <p><strong>Phone:</strong> ${data.phone}</p>
-          <p><strong>Email:</strong> ${data.email}</p>
-          <p><strong>Location:</strong> ${data.location}</p>
-          <p><strong>Farm Size:</strong> ${data.farmSize}</p>
-          <p><strong>Current Crops:</strong> ${data.currentCrops}</p>
-          <p><strong>Experience Level:</strong> ${data.experience}</p>
+          <p><strong>Full Name:</strong> ${sanitizeHTML(data.fullName)}</p>
+          <p><strong>Phone:</strong> ${sanitizeHTML(data.phone)}</p>
+          <p><strong>Email:</strong> ${sanitizeHTML(data.email)}</p>
+          <p><strong>Location:</strong> ${sanitizeHTML(data.location)}</p>
+          <p><strong>Farm Size:</strong> ${sanitizeHTML(data.farmSize)}</p>
+          <p><strong>Current Crops:</strong> ${sanitizeHTML(data.currentCrops)}</p>
+          <p><strong>Experience Level:</strong> ${sanitizeHTML(data.experience)}</p>
         `;
         break;
 
@@ -58,15 +72,15 @@ const handler = async (req: Request): Promise<Response> => {
         subject = "New Quote Request - Afreshia";
         htmlContent = `
           <h2>New Quote Request</h2>
-          <p><strong>Name:</strong> ${data.name}</p>
-          <p><strong>Email:</strong> ${data.email}</p>
-          <p><strong>Company:</strong> ${data.company}</p>
-          <p><strong>Phone:</strong> ${data.phone}</p>
-          <p><strong>Product:</strong> ${data.product}</p>
-          <p><strong>Quantity:</strong> ${data.quantity} ${data.unit}</p>
-          <p><strong>Destination:</strong> ${data.destination}</p>
-          <p><strong>Delivery Date:</strong> ${data.deliveryDate}</p>
-          <p><strong>Additional Info:</strong> ${data.additionalInfo}</p>
+          <p><strong>Name:</strong> ${sanitizeHTML(data.name)}</p>
+          <p><strong>Email:</strong> ${sanitizeHTML(data.email)}</p>
+          <p><strong>Company:</strong> ${sanitizeHTML(data.company)}</p>
+          <p><strong>Phone:</strong> ${sanitizeHTML(data.phone)}</p>
+          <p><strong>Product:</strong> ${sanitizeHTML(data.product)}</p>
+          <p><strong>Quantity:</strong> ${sanitizeHTML(data.quantity)} ${sanitizeHTML(data.unit)}</p>
+          <p><strong>Destination:</strong> ${sanitizeHTML(data.destination)}</p>
+          <p><strong>Delivery Date:</strong> ${sanitizeHTML(data.deliveryDate)}</p>
+          <p><strong>Additional Info:</strong> ${sanitizeHTML(data.additionalInfo)}</p>
         `;
         break;
 
@@ -74,12 +88,12 @@ const handler = async (req: Request): Promise<Response> => {
         subject = "New Contact Form Submission - Afreshia";
         htmlContent = `
           <h2>New Contact Form Submission</h2>
-          <p><strong>Name:</strong> ${data.name}</p>
-          <p><strong>Email:</strong> ${data.email}</p>
-          <p><strong>Company:</strong> ${data.company}</p>
-          <p><strong>Phone:</strong> ${data.phone}</p>
-          <p><strong>Subject:</strong> ${data.subject}</p>
-          <p><strong>Message:</strong> ${data.message}</p>
+          <p><strong>Name:</strong> ${sanitizeHTML(data.name)}</p>
+          <p><strong>Email:</strong> ${sanitizeHTML(data.email)}</p>
+          <p><strong>Company:</strong> ${sanitizeHTML(data.company)}</p>
+          <p><strong>Phone:</strong> ${sanitizeHTML(data.phone)}</p>
+          <p><strong>Subject:</strong> ${sanitizeHTML(data.subject)}</p>
+          <p><strong>Message:</strong> ${sanitizeHTML(data.message)}</p>
         `;
         break;
 
