@@ -8,6 +8,7 @@ import ForRetailers from '@/components/ForRetailers';
 import ForFarmers from '@/components/ForFarmers';
 import Logistics from '@/components/Logistics';
 import About from '@/components/About';
+import Chatbot from '@/components/Chatbot';
 
 const Index = () => {
   return (
@@ -32,6 +33,7 @@ const Index = () => {
       <section id="about">
         <About />
       </section>
+      <Chatbot />
     </div>
   );
 };
