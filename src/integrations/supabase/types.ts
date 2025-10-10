@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      buyer_requests: {
+        Row: {
+          additional_requirements: string | null
+          budget_range: string | null
+          company_name: string
+          contact_person: string
+          created_at: string
+          delivery_location: string
+          email: string
+          id: string
+          phone: string | null
+          preferred_delivery_date: string | null
+          product_type: string
+          quantity: number
+          specifications: Json
+          status: string | null
+          unit: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          additional_requirements?: string | null
+          budget_range?: string | null
+          company_name: string
+          contact_person: string
+          created_at?: string
+          delivery_location: string
+          email: string
+          id?: string
+          phone?: string | null
+          preferred_delivery_date?: string | null
+          product_type: string
+          quantity: number
+          specifications: Json
+          status?: string | null
+          unit: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          additional_requirements?: string | null
+          budget_range?: string | null
+          company_name?: string
+          contact_person?: string
+          created_at?: string
+          delivery_location?: string
+          email?: string
+          id?: string
+          phone?: string | null
+          preferred_delivery_date?: string | null
+          product_type?: string
+          quantity?: number
+          specifications?: Json
+          status?: string | null
+          unit?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       contact_messages: {
         Row: {
           company: string | null
