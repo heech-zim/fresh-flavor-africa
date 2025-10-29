@@ -251,6 +251,115 @@ export type Database = {
         }
         Relationships: []
       }
+      shipments: {
+        Row: {
+          blockchain_tx_hash: string | null
+          created_at: string
+          current_location: string | null
+          current_status: string
+          destination_location: string
+          estimated_delivery_date: string | null
+          id: string
+          origin_location: string
+          product_id: string | null
+          product_name: string
+          quantity: number
+          temperature_range: string | null
+          tracking_number: string
+          updated_at: string
+          vechain_tx_id: string | null
+        }
+        Insert: {
+          blockchain_tx_hash?: string | null
+          created_at?: string
+          current_location?: string | null
+          current_status?: string
+          destination_location: string
+          estimated_delivery_date?: string | null
+          id?: string
+          origin_location: string
+          product_id?: string | null
+          product_name: string
+          quantity: number
+          temperature_range?: string | null
+          tracking_number: string
+          updated_at?: string
+          vechain_tx_id?: string | null
+        }
+        Update: {
+          blockchain_tx_hash?: string | null
+          created_at?: string
+          current_location?: string | null
+          current_status?: string
+          destination_location?: string
+          estimated_delivery_date?: string | null
+          id?: string
+          origin_location?: string
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          temperature_range?: string | null
+          tracking_number?: string
+          updated_at?: string
+          vechain_tx_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracking_events: {
+        Row: {
+          blockchain_tx_hash: string | null
+          created_at: string
+          description: string
+          event_timestamp: string
+          event_type: string
+          id: string
+          location: string
+          shipment_id: string
+          temperature: number | null
+          vechain_tx_id: string | null
+        }
+        Insert: {
+          blockchain_tx_hash?: string | null
+          created_at?: string
+          description: string
+          event_timestamp?: string
+          event_type: string
+          id?: string
+          location: string
+          shipment_id: string
+          temperature?: number | null
+          vechain_tx_id?: string | null
+        }
+        Update: {
+          blockchain_tx_hash?: string | null
+          created_at?: string
+          description?: string
+          event_timestamp?: string
+          event_type?: string
+          id?: string
+          location?: string
+          shipment_id?: string
+          temperature?: number | null
+          vechain_tx_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracking_events_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "shipments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null
