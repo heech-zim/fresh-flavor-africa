@@ -17,6 +17,17 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import Navigation from '@/components/Navigation';
 import { supabase } from '@/integrations/supabase/client';
+import { z } from 'zod';
+
+// Validation schema for contact form
+const contactSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+  email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
+  company: z.string().trim().max(200, "Company name must be less than 200 characters").optional(),
+  phone: z.string().trim().max(20, "Phone number must be less than 20 characters").optional(),
+  subject: z.string().trim().min(1, "Subject is required").max(200, "Subject must be less than 200 characters"),
+  message: z.string().trim().min(1, "Message is required").max(2000, "Message must be less than 2000 characters")
+});
 
 const Contact = () => {
   const { toast } = useToast();
@@ -33,15 +44,18 @@ const Contact = () => {
     e.preventDefault();
     
     try {
+      // Validate form data
+      const validatedData = contactSchema.parse(formData);
+      
       // Save to database
       const { error: dbError } = await (supabase as any)
         .from('contact_messages')
         .insert([{
-          name: formData.name,
-          email: formData.email,
-          company: formData.company,
-          phone: formData.phone,
-          message: `Subject: ${formData.subject}\n\n${formData.message}`
+          name: validatedData.name,
+          email: validatedData.email,
+          company: validatedData.company || null,
+          phone: validatedData.phone || null,
+          message: `Subject: ${validatedData.subject}\n\n${validatedData.message}`
         }]);
 
       if (dbError) throw dbError;
@@ -50,7 +64,7 @@ const Contact = () => {
       const { error: emailError } = await supabase.functions.invoke('send-form-email', {
         body: {
           formType: 'contact',
-          data: formData
+          data: validatedData
         }
       });
 
@@ -74,11 +88,22 @@ const Contact = () => {
       });
     } catch (error) {
       console.error('Error submitting form:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send message. Please try again.",
-        variant: "destructive",
-      });
+      
+      if (error instanceof z.ZodError) {
+        // Handle validation errors
+        const firstError = error.errors[0];
+        toast({
+          title: "Validation Error",
+          description: firstError.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to send message. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 

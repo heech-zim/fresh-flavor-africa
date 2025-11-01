@@ -10,6 +10,21 @@ import { useLocation } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import { Truck, Package, MapPin, Calculator } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { z } from 'zod';
+
+// Validation schema for quote request
+const quoteSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+  email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
+  company: z.string().trim().max(200, "Company name must be less than 200 characters").optional(),
+  phone: z.string().trim().min(1, "Phone is required").max(20, "Phone number must be less than 20 characters"),
+  product: z.string().min(1, "Please select a product"),
+  quantity: z.string().min(1, "Quantity is required"),
+  unit: z.string().min(1, "Please select a unit"),
+  destination: z.string().trim().min(1, "Destination is required").max(200, "Destination must be less than 200 characters"),
+  deliveryDate: z.string().optional(),
+  additionalInfo: z.string().trim().max(1000, "Additional info must be less than 1000 characters").optional()
+});
 
 const RequestQuote = () => {
   const { toast } = useToast();
@@ -43,19 +58,22 @@ const RequestQuote = () => {
     e.preventDefault();
     
     try {
+      // Validate form data
+      const validatedData = quoteSchema.parse(formData);
+      
       // Save to database
       const { error: dbError } = await (supabase as any)
         .from('quote_requests')
         .insert([{
-          company_name: formData.company || 'Individual',
-          contact_person: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          product_type: formData.product,
-          quantity: `${formData.quantity} ${formData.unit}`,
-          delivery_location: formData.destination,
-          delivery_date: formData.deliveryDate || null,
-          additional_requirements: formData.additionalInfo
+          company_name: validatedData.company || 'Individual',
+          contact_person: validatedData.name,
+          email: validatedData.email,
+          phone: validatedData.phone,
+          product_type: validatedData.product,
+          quantity: `${validatedData.quantity} ${validatedData.unit}`,
+          delivery_location: validatedData.destination,
+          delivery_date: validatedData.deliveryDate || null,
+          additional_requirements: validatedData.additionalInfo || null
         }]);
 
       if (dbError) throw dbError;
@@ -64,7 +82,7 @@ const RequestQuote = () => {
       const { error: emailError } = await supabase.functions.invoke('send-form-email', {
         body: {
           formType: 'quote',
-          data: formData
+          data: validatedData
         }
       });
 
@@ -93,11 +111,22 @@ const RequestQuote = () => {
       });
     } catch (error) {
       console.error('Error submitting form:', error);
-      toast({
-        title: "Error",
-        description: "Failed to submit quote request. Please try again.",
-        variant: "destructive",
-      });
+      
+      if (error instanceof z.ZodError) {
+        // Handle validation errors
+        const firstError = error.errors[0];
+        toast({
+          title: "Validation Error",
+          description: firstError.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to submit quote request. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 

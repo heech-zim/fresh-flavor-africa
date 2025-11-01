@@ -10,6 +10,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { ClipboardList, Package, TrendingUp } from 'lucide-react';
+import { z } from 'zod';
+
+// Validation schema for buyer request
+const buyerRequestSchema = z.object({
+  company_name: z.string().trim().min(1, "Company name is required").max(200, "Company name must be less than 200 characters"),
+  contact_person: z.string().trim().min(1, "Contact person is required").max(100, "Contact person must be less than 100 characters"),
+  email: z.string().trim().email("Invalid email address").max(255, "Email must be less than 255 characters"),
+  phone: z.string().trim().max(20, "Phone number must be less than 20 characters").optional(),
+  product_type: z.string().min(1, "Please select a product"),
+  quantity: z.string().min(1, "Quantity is required"),
+  unit: z.string().min(1, "Unit is required"),
+  delivery_location: z.string().trim().min(1, "Delivery location is required").max(200, "Delivery location must be less than 200 characters"),
+  preferred_delivery_date: z.string().optional(),
+  budget_range: z.string().trim().max(100, "Budget range must be less than 100 characters").optional(),
+  additional_requirements: z.string().trim().max(1000, "Additional requirements must be less than 1000 characters").optional(),
+  spec_grade: z.string().trim().max(100, "Grade must be less than 100 characters").optional(),
+  spec_size: z.string().trim().max(100, "Size must be less than 100 characters").optional(),
+  spec_color: z.string().trim().max(100, "Color must be less than 100 characters").optional(),
+  spec_packaging: z.string().trim().max(100, "Packaging must be less than 100 characters").optional(),
+  spec_other: z.string().trim().max(500, "Other specifications must be less than 500 characters").optional()
+});
 
 const BuyerRequests = () => {
   const { toast } = useToast();
@@ -53,32 +74,35 @@ const BuyerRequests = () => {
     setIsSubmitting(true);
 
     try {
+      // Validate form data
+      const validatedData = buyerRequestSchema.parse(formData);
+      
       const { data: { user } } = await supabase.auth.getUser();
       
       const specifications = {
-        grade: formData.spec_grade,
-        size: formData.spec_size,
-        color: formData.spec_color,
-        packaging: formData.spec_packaging,
-        other: formData.spec_other
+        grade: validatedData.spec_grade || null,
+        size: validatedData.spec_size || null,
+        color: validatedData.spec_color || null,
+        packaging: validatedData.spec_packaging || null,
+        other: validatedData.spec_other || null
       };
 
       const { error } = await supabase
         .from('buyer_requests')
         .insert({
           user_id: user?.id || null,
-          company_name: formData.company_name,
-          contact_person: formData.contact_person,
-          email: formData.email,
-          phone: formData.phone,
-          product_type: formData.product_type,
+          company_name: validatedData.company_name,
+          contact_person: validatedData.contact_person,
+          email: validatedData.email,
+          phone: validatedData.phone || null,
+          product_type: validatedData.product_type,
           specifications,
-          quantity: parseFloat(formData.quantity),
-          unit: formData.unit,
-          delivery_location: formData.delivery_location,
-          preferred_delivery_date: formData.preferred_delivery_date || null,
-          budget_range: formData.budget_range,
-          additional_requirements: formData.additional_requirements
+          quantity: parseFloat(validatedData.quantity),
+          unit: validatedData.unit,
+          delivery_location: validatedData.delivery_location,
+          preferred_delivery_date: validatedData.preferred_delivery_date || null,
+          budget_range: validatedData.budget_range || null,
+          additional_requirements: validatedData.additional_requirements || null
         });
 
       if (error) throw error;
@@ -109,11 +133,22 @@ const BuyerRequests = () => {
       });
     } catch (error: any) {
       console.error('Error submitting request:', error);
-      toast({
-        title: "Submission Failed",
-        description: error.message || "Please try again later.",
-        variant: "destructive",
-      });
+      
+      if (error instanceof z.ZodError) {
+        // Handle validation errors
+        const firstError = error.errors[0];
+        toast({
+          title: "Validation Error",
+          description: firstError.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Submission Failed",
+          description: error.message || "Please try again later.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
