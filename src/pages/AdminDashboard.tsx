@@ -15,6 +15,42 @@ import { Switch } from '@/components/ui/switch';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Edit, Trash2, Upload } from 'lucide-react';
+import { z } from 'zod';
+
+// Validation schemas
+const contentSchema = z.object({
+  section_key: z.string().trim().min(1, "Section key is required").max(50, "Section key must be less than 50 characters"),
+  title: z.string().trim().max(200, "Title must be less than 200 characters").optional().or(z.literal('')),
+  content: z.string().trim().max(5000, "Content must be less than 5000 characters").optional().or(z.literal('')),
+  image_url: z.string().trim().max(500, "Image URL must be less than 500 characters").optional().or(z.literal('')).refine(
+    (val) => !val || val === '' || /^https?:\/\/.+/.test(val),
+    "Image URL must be a valid HTTP/HTTPS URL"
+  ),
+  is_active: z.boolean()
+});
+
+const productSchema = z.object({
+  name: z.string().trim().min(1, "Product name is required").max(200, "Product name must be less than 200 characters"),
+  category: z.string().trim().min(1, "Category is required").max(100, "Category must be less than 100 characters"),
+  description: z.string().trim().max(2000, "Description must be less than 2000 characters").optional().or(z.literal('')),
+  physical_specs: z.string().trim().max(2000, "Physical specs must be less than 2000 characters").optional().or(z.literal('')).refine(
+    (val) => {
+      if (!val || val === '') return true;
+      try { JSON.parse(val); return true; } catch { return false; }
+    },
+    "Physical specs must be valid JSON format"
+  ),
+  nutritional_info: z.string().trim().max(2000, "Nutritional info must be less than 2000 characters").optional().or(z.literal('')).refine(
+    (val) => {
+      if (!val || val === '') return true;
+      try { JSON.parse(val); return true; } catch { return false; }
+    },
+    "Nutritional info must be valid JSON format"
+  ),
+  certifications: z.string().trim().max(500, "Certifications must be less than 500 characters").optional().or(z.literal('')),
+  storage_requirements: z.string().trim().max(500, "Storage requirements must be less than 500 characters").optional().or(z.literal('')),
+  is_active: z.boolean()
+});
 
 const AdminDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -119,17 +155,20 @@ const AdminDashboard = () => {
 
   const handleContentSubmit = async (data: any) => {
     try {
+      // Validate input data
+      const validatedData = contentSchema.parse(data);
+      
       if (editingContent) {
         const { error } = await (supabase as any)
           .from('content_management')
-          .update(data)
+          .update(validatedData)
           .eq('id', editingContent.id);
         if (error) throw error;
         toast({ title: "Content updated successfully!" });
       } else {
         const { error } = await (supabase as any)
           .from('content_management')
-          .insert([data]);
+          .insert([validatedData]);
         if (error) throw error;
         toast({ title: "Content created successfully!" });
       }
@@ -139,11 +178,20 @@ const AdminDashboard = () => {
       form.reset();
       loadData();
     } catch (error) {
-      toast({ 
-        title: "Error", 
-        description: "Failed to save content", 
-        variant: "destructive" 
-      });
+      if (error instanceof z.ZodError) {
+        const firstError = error.errors[0];
+        toast({ 
+          title: "Validation Error", 
+          description: firstError.message, 
+          variant: "destructive" 
+        });
+      } else {
+        toast({ 
+          title: "Error", 
+          description: "Failed to save content", 
+          variant: "destructive" 
+        });
+      }
     }
   };
 
@@ -200,11 +248,38 @@ const AdminDashboard = () => {
   // Product management functions
   const handleProductSubmit = async (data: any) => {
     try {
+      // Validate input data
+      const validatedData = productSchema.parse(data);
+      
+      // Parse JSON fields with try-catch for safety (validation already checked format)
+      let physicalSpecs = null;
+      let nutritionalInfo = null;
+      
+      if (validatedData.physical_specs && validatedData.physical_specs !== '') {
+        try {
+          physicalSpecs = JSON.parse(validatedData.physical_specs);
+        } catch (e) {
+          throw new Error("Invalid JSON format in physical specs");
+        }
+      }
+      
+      if (validatedData.nutritional_info && validatedData.nutritional_info !== '') {
+        try {
+          nutritionalInfo = JSON.parse(validatedData.nutritional_info);
+        } catch (e) {
+          throw new Error("Invalid JSON format in nutritional info");
+        }
+      }
+      
       const productData = {
-        ...data,
-        physical_specs: data.physical_specs ? JSON.parse(data.physical_specs) : null,
-        nutritional_info: data.nutritional_info ? JSON.parse(data.nutritional_info) : null,
-        certifications: data.certifications ? data.certifications.split(',').map((cert: string) => cert.trim()) : []
+        name: validatedData.name,
+        category: validatedData.category,
+        description: validatedData.description || null,
+        physical_specs: physicalSpecs,
+        nutritional_info: nutritionalInfo,
+        certifications: validatedData.certifications ? validatedData.certifications.split(',').map((cert: string) => cert.trim()).filter(cert => cert.length > 0) : [],
+        storage_requirements: validatedData.storage_requirements || null,
+        is_active: validatedData.is_active
       };
 
       if (editingProduct) {
@@ -227,11 +302,26 @@ const AdminDashboard = () => {
       productForm.reset();
       loadData();
     } catch (error) {
-      toast({ 
-        title: "Error", 
-        description: "Failed to save product", 
-        variant: "destructive" 
-      });
+      if (error instanceof z.ZodError) {
+        const firstError = error.errors[0];
+        toast({ 
+          title: "Validation Error", 
+          description: firstError.message, 
+          variant: "destructive" 
+        });
+      } else if (error instanceof Error) {
+        toast({ 
+          title: "Error", 
+          description: error.message, 
+          variant: "destructive" 
+        });
+      } else {
+        toast({ 
+          title: "Error", 
+          description: "Failed to save product", 
+          variant: "destructive" 
+        });
+      }
     }
   };
 
