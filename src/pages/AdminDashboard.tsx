@@ -60,10 +60,15 @@ const AdminDashboard = () => {
   const [quoteRequests, setQuoteRequests] = useState([]);
   const [contentItems, setContentItems] = useState([]);
   const [products, setProducts] = useState([]);
+  const [shipments, setShipments] = useState([]);
+  const [trackingEvents, setTrackingEvents] = useState<Record<string, any[]>>({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingContent, setEditingContent] = useState(null);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [shipmentDialogOpen, setShipmentDialogOpen] = useState(false);
+  const [eventDialogOpen, setEventDialogOpen] = useState(false);
+  const [selectedShipment, setSelectedShipment] = useState<any>(null);
   const [uploadingSpec, setUploadingSpec] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -88,6 +93,28 @@ const AdminDashboard = () => {
       certifications: '',
       storage_requirements: '',
       is_active: true
+    }
+  });
+
+  const shipmentForm = useForm({
+    defaultValues: {
+      tracking_number: '',
+      product_name: '',
+      quantity: '',
+      origin_location: '',
+      destination_location: '',
+      current_status: 'pending',
+      temperature_range: '',
+      estimated_delivery_date: ''
+    }
+  });
+
+  const eventForm = useForm({
+    defaultValues: {
+      event_type: '',
+      location: '',
+      description: '',
+      temperature: ''
     }
   });
 
@@ -417,6 +444,131 @@ const AdminDashboard = () => {
     }
   };
 
+  // Shipment management functions
+  const handleShipmentSubmit = async (data: any) => {
+    try {
+      const shipmentData = {
+        tracking_number: data.tracking_number.trim(),
+        product_name: data.product_name.trim(),
+        quantity: parseFloat(data.quantity),
+        origin_location: data.origin_location.trim(),
+        destination_location: data.destination_location.trim(),
+        current_status: data.current_status,
+        temperature_range: data.temperature_range.trim() || null,
+        estimated_delivery_date: data.estimated_delivery_date || null
+      };
+
+      const { data: shipment, error } = await (supabase as any)
+        .from('shipments')
+        .insert([shipmentData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Call blockchain verification
+      try {
+        const { data: blockchainData } = await supabase.functions.invoke('blockchain-verify', {
+          body: {
+            eventData: {
+              event_type: 'shipment_created',
+              location: shipmentData.origin_location,
+              description: `Shipment created for ${shipmentData.product_name}`,
+              temperature: null
+            },
+            shipmentId: shipment.id
+          }
+        });
+
+        if (blockchainData) {
+          await (supabase as any)
+            .from('shipments')
+            .update({
+              blockchain_tx_hash: blockchainData.blockchainTxHash,
+              vechain_tx_id: blockchainData.vechainTxId
+            })
+            .eq('id', shipment.id);
+        }
+      } catch (blockchainError) {
+        console.error('Blockchain verification failed:', blockchainError);
+      }
+
+      toast({ title: "Shipment created successfully!" });
+      setShipmentDialogOpen(false);
+      shipmentForm.reset();
+      loadData();
+    } catch (error) {
+      console.error('Error creating shipment:', error);
+      toast({ 
+        title: "Error", 
+        description: "Failed to create shipment", 
+        variant: "destructive" 
+      });
+    }
+  };
+
+  const handleEventSubmit = async (data: any) => {
+    if (!selectedShipment) return;
+
+    try {
+      const eventData = {
+        shipment_id: selectedShipment.id,
+        event_type: data.event_type.trim(),
+        location: data.location.trim(),
+        description: data.description.trim(),
+        temperature: data.temperature ? parseFloat(data.temperature) : null,
+        event_timestamp: new Date().toISOString()
+      };
+
+      // Call blockchain verification first
+      let blockchainData = null;
+      try {
+        const response = await supabase.functions.invoke('blockchain-verify', {
+          body: {
+            eventData,
+            shipmentId: selectedShipment.id
+          }
+        });
+        blockchainData = response.data;
+      } catch (blockchainError) {
+        console.error('Blockchain verification failed:', blockchainError);
+      }
+
+      // Insert tracking event with blockchain data
+      const { error } = await (supabase as any)
+        .from('tracking_events')
+        .insert([{
+          ...eventData,
+          blockchain_tx_hash: blockchainData?.blockchainTxHash || null,
+          vechain_tx_id: blockchainData?.vechainTxId || null
+        }]);
+
+      if (error) throw error;
+
+      // Update shipment status and location
+      await (supabase as any)
+        .from('shipments')
+        .update({
+          current_status: data.event_type,
+          current_location: data.location
+        })
+        .eq('id', selectedShipment.id);
+
+      toast({ title: "Tracking event added successfully!" });
+      setEventDialogOpen(false);
+      setSelectedShipment(null);
+      eventForm.reset();
+      loadData();
+    } catch (error) {
+      console.error('Error adding tracking event:', error);
+      toast({ 
+        title: "Error", 
+        description: "Failed to add tracking event", 
+        variant: "destructive" 
+      });
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/');
@@ -444,9 +596,10 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="messages" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="messages">Contact Messages</TabsTrigger>
             <TabsTrigger value="quotes">Quote Requests</TabsTrigger>
+            <TabsTrigger value="shipments">Shipments</TabsTrigger>
             <TabsTrigger value="content">Content Management</TabsTrigger>
             <TabsTrigger value="products">Product Management</TabsTrigger>
           </TabsList>
@@ -520,6 +673,293 @@ const AdminDashboard = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="shipments">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Blockchain-Tracked Shipments ({shipments.length})</CardTitle>
+                  <Dialog open={shipmentDialogOpen} onOpenChange={setShipmentDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Shipment
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>Create New Shipment</DialogTitle>
+                      </DialogHeader>
+                      <Form {...shipmentForm}>
+                        <form onSubmit={shipmentForm.handleSubmit(handleShipmentSubmit)} className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={shipmentForm.control}
+                              name="tracking_number"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Tracking Number*</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="AFR123456789" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={shipmentForm.control}
+                              name="product_name"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Product Name*</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Fresh Avocados" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={shipmentForm.control}
+                              name="quantity"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Quantity*</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" placeholder="1000" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={shipmentForm.control}
+                              name="temperature_range"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Temperature Range</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="2-8°C" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={shipmentForm.control}
+                              name="origin_location"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Origin Location*</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Harare, Zimbabwe" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={shipmentForm.control}
+                              name="destination_location"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Destination Location*</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="New York, USA" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={shipmentForm.control}
+                              name="estimated_delivery_date"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Estimated Delivery Date</FormLabel>
+                                  <FormControl>
+                                    <Input type="date" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={shipmentForm.control}
+                              name="current_status"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Status</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="pending" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <Button type="submit" className="w-full">Create Shipment</Button>
+                        </form>
+                      </Form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {shipments.map((shipment: any) => (
+                    <div key={shipment.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-semibold text-lg">{shipment.tracking_number}</h3>
+                          <p className="text-sm text-muted-foreground">{shipment.product_name}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">{shipment.current_status}</Badge>
+                          {shipment.vechain_tx_id && (
+                            <Badge variant="default" className="bg-primary">
+                              Blockchain Verified
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                        <div>
+                          <p><strong>Origin:</strong> {shipment.origin_location}</p>
+                          <p><strong>Destination:</strong> {shipment.destination_location}</p>
+                        </div>
+                        <div>
+                          <p><strong>Quantity:</strong> {shipment.quantity} units</p>
+                          <p><strong>Temperature:</strong> {shipment.temperature_range || 'N/A'}</p>
+                        </div>
+                      </div>
+                      {shipment.vechain_tx_id && (
+                        <div className="bg-primary/5 p-2 rounded text-xs mb-3">
+                          <p><strong>VeChain TX:</strong> {shipment.vechain_tx_id}</p>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedShipment(shipment);
+                            setEventDialogOpen(true);
+                          }}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Tracking Event
+                        </Button>
+                        <span className="text-xs text-muted-foreground">
+                          {trackingEvents[shipment.id]?.length || 0} events recorded
+                        </span>
+                      </div>
+                      {trackingEvents[shipment.id] && trackingEvents[shipment.id].length > 0 && (
+                        <div className="mt-4 border-t pt-4">
+                          <h4 className="font-semibold text-sm mb-2">Recent Events:</h4>
+                          <div className="space-y-2">
+                            {trackingEvents[shipment.id].slice(0, 3).map((event: any) => (
+                              <div key={event.id} className="text-sm bg-muted/50 p-2 rounded">
+                                <div className="flex justify-between items-start">
+                                  <span className="font-medium capitalize">{event.event_type}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {new Date(event.event_timestamp).toLocaleString()}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">{event.location}</p>
+                                {event.vechain_tx_id && (
+                                  <Badge variant="outline" className="mt-1 text-xs">
+                                    Blockchain: {event.vechain_tx_id}
+                                  </Badge>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {shipments.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No shipments found. Create your first blockchain-tracked shipment above.
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Add Tracking Event Dialog */}
+            <Dialog open={eventDialogOpen} onOpenChange={setEventDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add Tracking Event</DialogTitle>
+                </DialogHeader>
+                {selectedShipment && (
+                  <div className="mb-4 p-3 bg-muted rounded">
+                    <p className="text-sm"><strong>Shipment:</strong> {selectedShipment.tracking_number}</p>
+                    <p className="text-sm"><strong>Product:</strong> {selectedShipment.product_name}</p>
+                  </div>
+                )}
+                <Form {...eventForm}>
+                  <form onSubmit={eventForm.handleSubmit(handleEventSubmit)} className="space-y-4">
+                    <FormField
+                      control={eventForm.control}
+                      name="event_type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Event Type*</FormLabel>
+                          <FormControl>
+                            <Input placeholder="pickup, departure, arrival, customs, delivery" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={eventForm.control}
+                      name="location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Location*</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Dubai International Airport" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={eventForm.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description*</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Package arrived at hub" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={eventForm.control}
+                      name="temperature"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Temperature (°C)</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.1" placeholder="4.5" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" className="w-full">Add Event with Blockchain Verification</Button>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           <TabsContent value="content">
