@@ -45,6 +45,7 @@ const Navigation = () => {
     { name: 'Contact', href: '/contact' },
     { name: 'Catalogue', href: '/catalogue' },
     { name: 'Submit Request', href: '/buyer-requests' },
+    { name: 'Farmer Portal', href: '/farmer/login' },
   ];
 
   return (

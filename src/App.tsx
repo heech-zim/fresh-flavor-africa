@@ -12,6 +12,10 @@ import Tracking from "./pages/Tracking";
 import DeliveryConfirmation from "./pages/DeliveryConfirmation";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import FarmerRegister from "./pages/FarmerRegister";
+import FarmerLogin from "./pages/FarmerLogin";
+import FarmerOnboarding from "./pages/FarmerOnboarding";
+import FarmerDashboard from "./pages/FarmerDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +36,10 @@ const App = () => (
           <Route path="/delivery-confirmation" element={<DeliveryConfirmation />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/farmer/register" element={<FarmerRegister />} />
+          <Route path="/farmer/login" element={<FarmerLogin />} />
+          <Route path="/farmer/onboarding" element={<FarmerOnboarding />} />
+          <Route path="/farmer/dashboard" element={<FarmerDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
