@@ -12,6 +12,10 @@ import Tracking from "./pages/Tracking";
 import DeliveryConfirmation from "./pages/DeliveryConfirmation";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import FarmerRegister from "./pages/FarmerRegister";
+import FarmerLogin from "./pages/FarmerLogin";
+import FarmerOnboarding from "./pages/FarmerOnboarding";
+import FarmerDashboard from "./pages/FarmerDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
