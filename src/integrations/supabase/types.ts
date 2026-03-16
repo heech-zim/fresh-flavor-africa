@@ -137,6 +137,196 @@ export type Database = {
         }
         Relationships: []
       }
+      farmer_documents: {
+        Row: {
+          created_at: string | null
+          document_type: string
+          farmer_id: string
+          file_url: string
+          id: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          document_type: string
+          farmer_id: string
+          file_url: string
+          id?: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          document_type?: string
+          farmer_id?: string
+          file_url?: string
+          id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farmer_documents_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "farmer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      farmer_payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          farmer_id: string
+          id: string
+          payment_date: string | null
+          reference_number: string | null
+          shipment_id: string | null
+          status: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          farmer_id: string
+          id?: string
+          payment_date?: string | null
+          reference_number?: string | null
+          shipment_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          farmer_id?: string
+          id?: string
+          payment_date?: string | null
+          reference_number?: string | null
+          shipment_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farmer_payments_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "farmer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "farmer_payments_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "shipments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      farmer_produce_listings: {
+        Row: {
+          available_from: string | null
+          category: string
+          created_at: string | null
+          farmer_id: string
+          harvest_date: string | null
+          id: string
+          price_per_unit: number | null
+          product_name: string
+          quantity: number
+          status: string | null
+          unit: string
+          updated_at: string | null
+        }
+        Insert: {
+          available_from?: string | null
+          category: string
+          created_at?: string | null
+          farmer_id: string
+          harvest_date?: string | null
+          id?: string
+          price_per_unit?: number | null
+          product_name: string
+          quantity: number
+          status?: string | null
+          unit: string
+          updated_at?: string | null
+        }
+        Update: {
+          available_from?: string | null
+          category?: string
+          created_at?: string | null
+          farmer_id?: string
+          harvest_date?: string | null
+          id?: string
+          price_per_unit?: number | null
+          product_name?: string
+          quantity?: number
+          status?: string | null
+          unit?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farmer_produce_listings_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "farmer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      farmer_profiles: {
+        Row: {
+          created_at: string | null
+          current_crops: string[] | null
+          experience_level: string | null
+          farm_name: string | null
+          farm_size: string | null
+          globalg_ap_certified: boolean | null
+          id: string
+          location: string | null
+          onboarding_completed: boolean | null
+          phone: string | null
+          province: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_crops?: string[] | null
+          experience_level?: string | null
+          farm_name?: string | null
+          farm_size?: string | null
+          globalg_ap_certified?: boolean | null
+          id?: string
+          location?: string | null
+          onboarding_completed?: boolean | null
+          phone?: string | null
+          province?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_crops?: string[] | null
+          experience_level?: string | null
+          farm_name?: string | null
+          farm_size?: string | null
+          globalg_ap_certified?: boolean | null
+          id?: string
+          location?: string | null
+          onboarding_completed?: boolean | null
+          phone?: string | null
+          province?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category: string
