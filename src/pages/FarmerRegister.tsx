@@ -38,8 +38,8 @@ const FarmerRegister = () => {
       if (error) throw error;
 
       if (data.user) {
-        // Assign farmer role
-        await supabase.from('user_roles').insert({ user_id: data.user.id, role: 'farmer' });
+        // Assign farmer role via secure RPC
+        await supabase.rpc('assign_farmer_role');
 
         // Create farmer profile
         await supabase.from('farmer_profiles').insert({ user_id: data.user.id });
