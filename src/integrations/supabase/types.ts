@@ -576,6 +576,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_farmer_role: { Args: never; Returns: undefined }
       create_admin_user: {
         Args: { user_email: string; user_password: string }
         Returns: string
